@@ -4,17 +4,25 @@ import random as rn
 def main():
   board =  chess.Board()
 
-
   print(board)
-
-  print(board.legal_moves)
 
   while not board.is_game_over():
 
-    nextMove = rn.choice(list(board.legal_moves))
-    board.push(nextMove)
+    # human move
+    print(board.legal_moves)
+    nextMove = input()
+    board.push(board.parse_san(nextMove))
+    
     print("----------\nply: %d \n" %(board.ply()))
     print(board)
+
+    # Computer move
+    nextMove = rn.choice(list(board.legal_moves))
+    board.push(nextMove)
+
+    print("----------\nply: %d \n" %(board.ply()))
+    print(board)
+
 
 
 if __name__ == "__main__":
