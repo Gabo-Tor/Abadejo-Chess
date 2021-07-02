@@ -4,3 +4,4 @@ Python Chess AI
 ## Dependancies
 
 * chess
+* numpy

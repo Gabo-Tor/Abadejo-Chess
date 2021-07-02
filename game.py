@@ -1,7 +1,5 @@
-from math import inf
-import re
 import chess
-import random as rn
+import chess.svg
 import numpy as np
 
 def heuristicValue(board):
@@ -21,7 +19,8 @@ def heuristicValue(board):
     Bvalue += board.pieces(piece, chess.BLACK).tolist().count(True)
     Wvalue += board.pieces(piece, chess.WHITE).tolist().count(True)
 
-  # TODO: compute values for past, conected, isoleted pawns
+  # TODO: compute values for past, conected, isoleted pawns 
+  # https://es.wikipedia.org/wiki/Valor_relativo_de_las_piezas_de_ajedrez
 
   # we compute the real advantage, pieces are more valuble when there is less pieces
   materialValue = (Wvalue-Bvalue) / max(Wvalue, Bvalue)
@@ -82,6 +81,8 @@ def main():
 
     print("----------\nply: %d \n" %(board.ply()))
     print(board)
+    
+    chess.svg.board(board) # can't print this :(
 
 
 if __name__ == "__main__":
