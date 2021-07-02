@@ -1,3 +1,4 @@
+from math import inf
 import re
 import chess
 import random as rn
@@ -30,10 +31,32 @@ def heuristicValue(board):
 def moveValue(board, move):
   ## gives the value for a move in the given board using some evaluation
   board.push(move)
-  value = heuristicValue(board)
+  value = minimax(board)
   board.pop()
   return value
 
+def minimax(board, depth = 2):
+  ## evaluates position to a depth using minimax
+
+  if depth == 0:
+    return heuristicValue(board)
+
+  if board.turn == chess.WHITE:
+    value = -np.inf
+    for move in board.legal_moves:
+
+      board.push(move)
+      value = max(value, minimax(board, depth-1))
+      board.pop()
+    return value
+
+  else:
+    value = np.inf
+    for move in board.legal_moves:
+      board.push(move)
+      value = min(value, minimax(board, depth-1))
+      board.pop()
+    return value
 
 def main():
   board =  chess.Board()
@@ -51,14 +74,14 @@ def main():
     print(board)
 
     # Computer move
-    nMove = np.argmin(list(moveValue(board, move) for move in list(board.legal_moves))) # this is probably not efficient
+    nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
     nextMove = list(board.legal_moves)[nMove] 
+
     print(nextMove)
     board.push(nextMove)
 
     print("----------\nply: %d \n" %(board.ply()))
     print(board)
-
 
 
 if __name__ == "__main__":
