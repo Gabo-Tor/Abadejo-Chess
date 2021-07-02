@@ -1,5 +1,4 @@
 import chess
-import chess.svg
 import numpy as np
 
 def heuristicValue(board):
@@ -56,34 +55,3 @@ def minimax(board, depth = 2):
       value = min(value, minimax(board, depth-1))
       board.pop()
     return value
-
-def main():
-  board =  chess.Board()
-
-  print(board)
-
-  while not board.is_game_over():
-
-    # human move
-    print(board.legal_moves)
-    nextMove = input()
-    board.push(board.parse_san(nextMove))
-    
-    print("----------\nply: %d \n" %(board.ply()))
-    print(board)
-
-    # Computer move
-    nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
-    nextMove = list(board.legal_moves)[nMove] 
-
-    print(nextMove)
-    board.push(nextMove)
-
-    print("----------\nply: %d \n" %(board.ply()))
-    print(board)
-    
-    chess.svg.board(board) # can't print this :(
-
-
-if __name__ == "__main__":
-  main()
