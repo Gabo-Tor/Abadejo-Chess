@@ -2,7 +2,7 @@ import chess
 import chess.svg
 import numpy as np
 from valuators import *
-from flask import Flask, Response
+from flask import Flask, Response, render_template, jsonify
 
 board =  chess.Board()
 
@@ -35,7 +35,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def init():
-  return '<html><body><img src="board.svg"></img></html></body>'
+  return render_template('index.html')
 
 @app.route("/board.svg")
 def draw_board():
@@ -44,13 +44,16 @@ def draw_board():
   else:
     return Response(chess.svg.board(board, size= 600), mimetype='image/svg+xml')
 
-@app.route("/move", methods=["GET"])
+@app.route("/move")
 def move():
+  
   nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
   board.push(nextMove)
-  return ""
+  print("was here")
+
+  return jsonify("location.reload();")
 
 if __name__ == "__main__":
-  app.run()
+  # app.run()
   main()

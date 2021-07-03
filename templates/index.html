@@ -1,0 +1,37 @@
+<html>
+
+<body style="background-color:rgb(33, 32, 32)">
+    <div>
+        <img src="board.svg"></img>
+    </div>
+    <div style="width: 100%; overflow: hidden;">
+        <H1></H1>
+        <div style="width: 350px; float: left;">
+            <form>
+                <a href=# id=test><button class='btn btn-default'>Computer Move</button></a>
+            </form>
+        </div>
+        <div style="margin-left: 370px;">
+            <form><input type="text"></input><input type="submit" value="Human Move" ></form>
+        </div>
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type=text/javascript>
+            $(function() {
+              $('a#test').on('click', function(e) {
+                e.preventDefault()
+                $.getJSON('/move',
+                    function(data) {
+                  //do nothing
+                  
+                });
+
+                return false;
+              });
+
+            });
+    </script>
+
+</html>
+</body>
