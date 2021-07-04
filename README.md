@@ -12,3 +12,11 @@ Python 3 of course
 * chess
 * numpy
 * flask
+* time
+
+## Todo:
+
+* add movility to the heuristic
+* add move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
+* add quiescence search
+* add tranposition table with Zobrist Hashing

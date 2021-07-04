@@ -7,9 +7,7 @@ materialValues = {chess.PAWN:   100,
                   chess.ROOK:   563,
                   chess.QUEEN:  950,
                   chess.KING: 9999}
-
-        
-
+    
 # knigths on the rim are dim
 pieceSquare =  {
 
@@ -29,7 +27,7 @@ chess.KNIGHT:
 
 chess.ROOK:  64* [5.63],
 chess.QUEEN: 64* [9.5],
-chess.KING: 64 * [9999]
+chess.KING:  64* [9999]
  }
 
 def heuristicValue(board):
@@ -51,15 +49,12 @@ def heuristicValue(board):
   # we compute the real advantage, pieces are more valuble when there is less pieces
   materialValue = (Wvalue-Bvalue) / max(Wvalue, Bvalue)
 
-
   if board.is_checkmate():
-      if board.turn:
+      if board.turn == chess.WHITE:
           return -99999
       else:
           return 99999
-  if board.is_stalemate():
-      return 0
-  if board.is_insufficient_material():
+  if board.is_stalemate() or board.is_insufficient_material():
       return 0
   else:
     return materialValue
@@ -67,7 +62,7 @@ def heuristicValue(board):
 def moveValue(board, move):
   ## gives the value for a move in the given board using some evaluation
   board.push(move)
-  value = minimax(board)
+  value = minimaxAB(board)
   board.pop()
   return value
 
@@ -92,4 +87,38 @@ def minimax(board, depth = 2):
       board.push(move)
       value = min(value, minimax(board, depth-1))
       board.pop()
+    return value
+
+
+def minimaxAB(board, depth = 4, alpha = -np.inf, beta = np.inf):
+  ## evaluates position to a depth using minimax with alpha beta pruning
+
+  if depth == 0:
+    return heuristicValue(board)
+
+  if board.turn == chess.WHITE:
+    value = -np.inf
+    for move in board.legal_moves:
+
+      board.push(move)
+      value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+      board.pop()
+
+      if value>= beta:
+        break
+      alpha = max(alpha, value)
+
+    return value
+
+  else:
+    value = np.inf
+    for move in board.legal_moves:
+      board.push(move)
+      value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+      board.pop()
+
+      if value<= alpha:
+        break
+      alpha = min(beta, value)
+
     return value

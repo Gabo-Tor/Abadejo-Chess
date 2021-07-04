@@ -1,6 +1,7 @@
 import chess
 import chess.svg
 import numpy as np
+import time
 from valuators import *
 from flask import Flask, Response, render_template, jsonify
 
@@ -18,16 +19,17 @@ def main():
     board.push(board.parse_san(nextMove))
     
     print("----------\nply: %d \n" %(board.ply()))
+    startT = time.time()
     print(board)
-
+    
     # Computer move
     nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
     nextMove = list(board.legal_moves)[nMove] 
 
-    print(nextMove)
+    print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, nextMove), nextMove, time.time()- startT))    
     board.push(nextMove)
 
-    print("----------\nply: %d \n" %(board.ply()))
+
     print(board)
     
 
@@ -55,5 +57,5 @@ def move():
   return jsonify("location.reload();")
 
 if __name__ == "__main__":
-  # app.run()
+  # app.run(debug= True)
   main()
