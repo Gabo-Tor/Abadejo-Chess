@@ -3,7 +3,7 @@ import chess.svg
 import numpy as np
 import time
 from valuators import *
-from flask import Flask, Response, render_template, jsonify
+from flask import Flask, Response, render_template
 
 board =  chess.Board()
 
@@ -17,7 +17,6 @@ def main():
     print(board.legal_moves)
     nextMove = input()
     board.push(board.parse_san(nextMove))
-    
     print("----------\nply: %d \n" %(board.ply()))
     startT = time.time()
     print(board)
@@ -48,14 +47,15 @@ def draw_board():
 
 @app.route("/move")
 def move():
-  
-  nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
+  if board.turn == chess.WHITE:
+    nMove = np.argmax(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
+  else:
+    nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
   board.push(nextMove)
-  print("was here")
 
-  return jsonify("location.reload();")
+  return ""
 
 if __name__ == "__main__":
-  # app.run(debug= True)
+  app.run(debug= True)
   main()

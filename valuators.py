@@ -8,10 +8,20 @@ materialValues = {chess.PAWN:   100,
                   chess.QUEEN:  950,
                   chess.KING: 9999}
     
-# knigths on the rim are dim
+# knigths on the rim are dim this is 50% slower than using just the number
 pieceSquare =  {
 
-chess.PAWN: 64* [1.0],
+chess.PAWN: 
+[
+    1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
+    1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
+    1.00, 1.05, 1.10, 1.15, 1.15, 0.90, 1.00, 1.00,
+    1.00, 1.00, 1.15, 1.20, 1.20, 1.00, 1.00, 1.00,
+    1.00, 1.00, 1.15, 1.20, 1.20, 1.00, 1.00, 1.00,
+    1.00, 1.05, 1.10, 1.15, 1.15, 0.90, 1.00, 1.00,
+    1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
+    1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
+],
 chess.BISHOP: 64* [3.33],
 chess.KNIGHT: 
 [
@@ -27,7 +37,7 @@ chess.KNIGHT:
 
 chess.ROOK:  64* [5.63],
 chess.QUEEN: 64* [9.5],
-chess.KING:  64* [9999]
+chess.KING:  64* [200]
  }
 
 def heuristicValue(board):
@@ -57,7 +67,20 @@ def heuristicValue(board):
   if board.is_stalemate() or board.is_insufficient_material():
       return 0
   else:
-    return materialValue
+
+    if board.turn == chess.WHITE:
+      WMvalue = len(list(board.legal_moves))
+      board.turn = chess.BLACK
+      BMvalue = len(list(board.legal_moves))
+      board.turn = chess.WHITE
+    else:
+      BMvalue = len(list(board.legal_moves))
+      board.turn = chess.WHITE
+      WMvalue = len(list(board.legal_moves))
+      board.turn = chess.BLACK
+    movilityValue = WMvalue - BMvalue
+
+    return materialValue + movilityValue/2000
 
 def moveValue(board, move):
   ## gives the value for a move in the given board using some evaluation
@@ -90,11 +113,15 @@ def minimax(board, depth = 2):
     return value
 
 
-def minimaxAB(board, depth = 4, alpha = -np.inf, beta = np.inf):
+def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
   ## evaluates position to a depth using minimax with alpha beta pruning
 
-  if depth == 0:
-    return heuristicValue(board)
+  if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
+    if len(list(move for move in board.legal_moves if board.is_capture(move)))>0: #  node is not quiet
+      return quiescence_search(board, depth = 2, alpha = alpha, beta =  beta)
+    else:
+      return heuristicValue(board)
+      
 
   if board.turn == chess.WHITE:
     value = -np.inf
@@ -122,3 +149,40 @@ def minimaxAB(board, depth = 4, alpha = -np.inf, beta = np.inf):
       alpha = min(beta, value)
 
     return value
+
+
+def quiescence_search(board, depth = 99, alpha = -np.inf, beta = np.inf):
+
+  if len(list(move for move in board.legal_moves if board.is_capture(move)))== 0\
+     or board.is_stalemate() or board.is_insufficient_material() or depth == 0: #  node is quiet
+    return heuristicValue(board)
+
+  else:      
+
+    if board.turn == chess.WHITE:
+      value = -np.inf
+      for move in board.legal_moves:
+        if board.is_capture(move):
+          board.push(move)
+          value = max(value, quiescence_search(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
+
+          if value>= beta:
+            break
+          alpha = max(alpha, value)
+
+      return value
+
+    else:
+      value = np.inf
+      for move in board.legal_moves:
+        if board.is_capture(move):
+          board.push(move)
+          value = min(value, quiescence_search(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
+
+          if value<= alpha:
+            break
+          alpha = min(beta, value)
+
+      return value
