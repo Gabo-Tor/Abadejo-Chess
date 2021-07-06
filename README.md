@@ -3,11 +3,11 @@ Python Chess AI
 
 ## Use
 
-runs in flask on localhost, for now go to http://127.0.0.1:5000/move for a move, then refresh http://127.0.0.1:5000/ i know, super intuitive
+runs in flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 
 ## Dependancies
 
-Python 3 of course
+**Python 3** of course
 
 * chess
 * numpy
@@ -16,7 +16,17 @@ Python 3 of course
 
 ## Todo:
 
-* add movility to the heuristic
-* add move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
-* add quiescence search
-* add tranposition table with Zobrist Hashing
+- [x] Piece value heuristic
+- [x] MiniMax
+- [x] Board rendering
+- [x] add movility to the heuristic
+- [x] MiniMax + Alpha Beta pruning
+- [x] Piece square tables
+- [x] Movility to the heuristic
+- [ ] move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
+- [x] Quiescence search
+- [x] User input via submit field
+- [ ] User input via clicking
+- [ ] Zobrist Hashing
+- [ ] Tranposition tables
+- [ ] Neural network evaluation

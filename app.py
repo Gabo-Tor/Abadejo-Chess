@@ -2,8 +2,9 @@ import chess
 import chess.svg
 import numpy as np
 import time
+import traceback
 from valuators import *
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request, redirect
 
 board =  chess.Board()
 
@@ -53,8 +54,18 @@ def move():
     nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
   board.push(nextMove)
-
   return ""
+
+@app.route("/human_move", methods=['POST'])
+def human_move():
+  print("the recive txt is")
+  print(request.form.get('hmove'))
+  nextMove = request.form.get('hmove')
+  try:
+    board.push(board.parse_san(nextMove))
+  except:
+    traceback.print_exc()
+  return redirect('/')
 
 if __name__ == "__main__":
   app.run(debug= True)
