@@ -13,17 +13,17 @@ runs in flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 * numpy
 * flask
 * time
+* traceback
 
 ## Todo:
 
 - [x] Piece value heuristic
 - [x] MiniMax
 - [x] Board rendering
-- [x] add movility to the heuristic
+- [x] Movility to the heuristic
 - [x] MiniMax + Alpha Beta pruning
 - [x] Piece square tables
-- [x] Movility to the heuristic
-- [ ] move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
+- [ ] Move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
 - [x] Quiescence search
 - [x] User input via submit field
 - [ ] User input via clicking
