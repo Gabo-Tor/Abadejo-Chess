@@ -12,7 +12,7 @@
             </form>
         </div>
         <div style="margin-left: 370px;">
-            <form><input type="text"></input><input type="submit" value="Human Move" ></form>
+            <form><input type="text"></input><input type="submit" value="Human Move"></form>
         </div>
     </div>
 
@@ -21,10 +21,9 @@
             $(function() {
               $('a#test').on('click', function(e) {
                 e.preventDefault()
-                $.getJSON('/move',
+                $.get('/move',
                     function(data) {
-                  //do nothing
-                  
+                    location.reload();
                 });
 
                 return false;
