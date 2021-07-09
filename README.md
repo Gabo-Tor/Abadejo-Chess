@@ -14,6 +14,9 @@ runs in flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 * flask
 * time
 * traceback
+optinonal:
+* pytorch
+
 
 ## Todo:
 
@@ -26,6 +29,7 @@ runs in flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 - [ ] Move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
 - [x] Quiescence search
 - [x] User input via submit field
+- [ ] Info in the web and automatic enemy move
 - [ ] User input via clicking
 - [ ] Zobrist Hashing
 - [ ] Tranposition tables
