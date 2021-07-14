@@ -4,11 +4,11 @@ import chess.pgn
 import numpy as np
 
 # we usea a PGN database from: https://database.lichess.org/
-DATABASE = r"lichess_db_standard_rated_2015-05.pgn"
+DATABASE = r"C:\lichess_db_standard_rated_2015-05.pgn"
 
 def read():
   # Reads a lichess PGN dump and saves all anotated positions to a database file 
-  positions, games, exponent = 0, 0, 2
+  positions, games, exponent = 0, 0, 1
   dbX = np.array(parse_board(chess.Board())) # Data
   dbY = np.array([520]) # Target
   pgn = open(DATABASE)
@@ -22,6 +22,7 @@ def read():
         continue
       board= move.board()
       dbX = np.append(dbX, parse_board(board), axis=0)
+      # we should be encoding turn info or evaluating from the corresponig sire it tis wrong doing it like this
       dbY = np.append(dbY, [povScore.pov(chess.WHITE).wdl(model="lichess").wins], axis=0)
       positions += 1
     games += 1

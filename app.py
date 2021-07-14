@@ -48,25 +48,32 @@ def draw_board():
 
 @app.route("/move")
 def move():
+  startT = time.time()
   if board.turn == chess.WHITE:
     nMove = np.argmax(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
   else:
     nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
+  print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, nextMove), nextMove, time.time()- startT))    
   board.push(nextMove)
   return ""
 
 @app.route("/human_move", methods=['POST'])
 def human_move():
-  print("the recive txt is")
+  startT = time.time()
+  print("the recived txt is")
   print(request.form.get('hmove'))
   nextMove = request.form.get('hmove')
   try:
+    print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, board.parse_san(nextMove)), board.parse_san(nextMove), time.time()- startT))    
     board.push(board.parse_san(nextMove))
+    move()
   except:
     traceback.print_exc()
+
   return redirect('/')
 
 if __name__ == "__main__":
+  initNeuralValuator()
   app.run(debug= True)
-  main()
+  # main()
