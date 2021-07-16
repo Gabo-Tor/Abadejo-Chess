@@ -6,6 +6,7 @@ import traceback
 from valuators import *
 from flask import Flask, Response, render_template, request, redirect
 
+# board =  chess.Board("r1b1k1nr/ppp2ppp/1bn1pq2/3p4/3P4/P3BN1P/1PP1PPPR/RNQ1KB2 b Qkq - 4 7")
 board =  chess.Board()
 
 def main():
@@ -49,11 +50,18 @@ def draw_board():
 @app.route("/move")
 def move():
   startT = time.time()
+
+  moveValues = list(moveValue(board, move) for move in board.legal_moves)
+  print(board.legal_moves)
+  print(moveValues)
+
   if board.turn == chess.WHITE:
-    nMove = np.argmax(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
+    nMove = np.argmax(moveValues) # this is probably not efficient
   else:
-    nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
+    nMove = np.argmin(moveValues) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
+
+
   print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, nextMove), nextMove, time.time()- startT))    
   board.push(nextMove)
   return ""

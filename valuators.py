@@ -8,6 +8,13 @@ materialValues = {chess.PAWN:   100,
                   chess.ROOK:   563,
                   chess.QUEEN:  950,
                   chess.KING: 9999}
+
+# materialValues = {chess.PAWN:   100,
+#                   chess.BISHOP: 300,
+#                   chess.KNIGHT: 300,
+#                   chess.ROOK:   500,
+#                   chess.QUEEN:  900,
+#                   chess.KING: 9999}
     
 # knigths on the rim are dim this is 50% slower than using just the number
 pieceSquare =  {
@@ -63,6 +70,8 @@ def heuristicValue(board):
 
     Bvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.BLACK).tolist(), pieceSquare[piece] ))
     Wvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.WHITE).tolist(), pieceSquare[piece] ))
+    # Bvalue += board.pieces(piece, chess.BLACK).tolist().count(True)* materialValues[piece]
+    # Wvalue += board.pieces(piece, chess.WHITE).tolist().count(True)* materialValues[piece]
 
   # TODO: compute values for past, conected, isoleted pawns 
   # https://es.wikipedia.org/wiki/Valor_relativo_de_las_piezas_de_ajedrez
@@ -130,36 +139,58 @@ def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
 
   if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
     if len(list(move for move in board.legal_moves if board.is_capture(move)))>0: #  node is not quiet
-      return quiescence_search(board, depth = 2, alpha = alpha, beta =  beta)
+      return quiescence_search(board, depth = 0, alpha = alpha, beta =  beta)
     else:
-      return neuralValuator.NeuralValue(board)
-      # return heuristicValue(board)
+      # return neuralValuator.NeuralValue(board)
+      return heuristicValue(board)
       
 
   if board.turn == chess.WHITE:
     value = -np.inf
     for move in board.legal_moves:
+      if board.is_capture(move):
+        board.push(move)
+        value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+        board.pop()
 
-      board.push(move)
-      value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-      board.pop()
+        if value>= beta:
+          break
+        alpha = max(alpha, value)
 
-      if value>= beta:
-        break
-      alpha = max(alpha, value)
+    for move in board.legal_moves:
+      if not board.is_capture(move):
+        board.push(move)
+        value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+        board.pop()
+
+        if value>= beta:
+          break
+        alpha = max(alpha, value)
+
 
     return value
 
   else:
     value = np.inf
     for move in board.legal_moves:
-      board.push(move)
-      value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-      board.pop()
+      if board.is_capture(move):
+        board.push(move)
+        value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+        board.pop()
 
-      if value<= alpha:
-        break
-      alpha = min(beta, value)
+        if value<= alpha:
+          break
+        beta = min(beta, value)
+
+    for move in board.legal_moves:
+      if not board.is_capture(move):
+        board.push(move)
+        value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+        board.pop()
+
+        if value<= alpha:
+          break
+        beta = min(beta, value)
 
     return value
 
@@ -168,8 +199,8 @@ def quiescence_search(board, depth = 99, alpha = -np.inf, beta = np.inf):
 
   if len(list(move for move in board.legal_moves if board.is_capture(move)))== 0\
      or board.is_stalemate() or board.is_insufficient_material() or depth == 0: #  node is quiet
-    return neuralValuator.NeuralValue(board)
-    # return heuristicValue(board)
+    # return neuralValuator.NeuralValue(board)
+    return heuristicValue(board)
 
   else:      
 
@@ -197,7 +228,7 @@ def quiescence_search(board, depth = 99, alpha = -np.inf, beta = np.inf):
 
           if value<= alpha:
             break
-          alpha = min(beta, value)
+          beta = min(beta, value)
 
       return value
 
