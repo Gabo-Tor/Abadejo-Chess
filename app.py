@@ -49,20 +49,11 @@ def draw_board():
 
 @app.route("/move")
 def move():
+
   startT = time.time()
+  nextMove, value = makeMove(board) 
 
-  moveValues = list(moveValue(board, move) for move in board.legal_moves)
-  print(board.legal_moves)
-  print(moveValues)
-
-  if board.turn == chess.WHITE:
-    nMove = np.argmax(moveValues) # this is probably not efficient
-  else:
-    nMove = np.argmin(moveValues) # this is probably not efficient
-  nextMove = list(board.legal_moves)[nMove] 
-
-
-  print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, nextMove), nextMove, time.time()- startT))    
+  print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, value, nextMove, time.time()- startT))    
   board.push(nextMove)
   return ""
 
@@ -73,7 +64,7 @@ def human_move():
   print(request.form.get('hmove'))
   nextMove = request.form.get('hmove')
   try:
-    print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, board.parse_san(nextMove)), board.parse_san(nextMove), time.time()- startT))    
+    print("----------\nply: %d move: %s time: %f\n" %(board.ply()+1, board.parse_san(nextMove), time.time()- startT))    
     board.push(board.parse_san(nextMove))
     move()
   except:
