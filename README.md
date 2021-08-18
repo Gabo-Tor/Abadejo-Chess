@@ -48,4 +48,4 @@ optional:
 - [x] Tranposition tables
 - [ ] iterative deepening
 - [ ] Aspiration Window
-- [ ] Neural network evaluation
+- [x] Neural network evaluation
