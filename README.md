@@ -27,8 +27,8 @@ optional:
 ## Objetives:
 
 - [ ] Make a chess engine that can beat me
-- [ ] Use a CNN for eval
-- [ ] Learn more about PyTorch and dataset generation
+- [x] Use a CNN for eval
+- [x] Learn more about PyTorch and dataset generation
 
 ## TODO:
 
