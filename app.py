@@ -7,7 +7,9 @@ from valuators import *
 from flask import Flask, Response, render_template, request, redirect
 
 # board =  chess.Board("r1b1k1nr/ppp2ppp/1bn1pq2/3p4/3P4/P3BN1P/1PP1PPPR/RNQ1KB2 b Qkq - 4 7")
+# board =  chess.Board("r1b2rk1/ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R b Kq - 0 1")
 board =  chess.Board()
+# board.push_san("e4")
 
 def main():
 
@@ -42,10 +44,10 @@ def init():
 
 @app.route("/board.svg")
 def draw_board():
-  if board.ply() >0:
-    return Response(chess.svg.board(board, size= 600,lastmove= board.peek()), mimetype='image/svg+xml')
+  if board.ply() >1:
+    return Response(chess.svg.board(board, size= 600, colors= {'square light': '#d5d5d5','square dark': '#547c48','margin': '#000000', 'coord': '#ffffff'},lastmove= board.peek()), mimetype='image/svg+xml')
   else:
-    return Response(chess.svg.board(board, size= 600), mimetype='image/svg+xml')
+    return Response(chess.svg.board(board, size= 600, colors= {'square light': '#d5d5d5','square dark': '#547c48','margin': '#000000', 'coord': '#ffffff'}), mimetype='image/svg+xml')
 
 @app.route("/move")
 def move():

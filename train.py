@@ -10,9 +10,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 # default `log_dir` is "runs" - we'll be more specific here
-n_epochs = 20
+n_epochs = 30
 batch_size = 64
-batch_size_test = 1024
+batch_size_test = 10240
 learning_rate = 0.0005
 momentum = 0.1
 random_seed = 1 # We are setting some seeds by hand BUT we use CUDA for faster training, so training is not deterministic see: https://pytorch.org/docs/stable/notes/randomness.html
@@ -33,14 +33,14 @@ torch.manual_seed(random_seed)
 #         target = torch.from_numpy(target).float()
 #         return data, target
 
-inps = torch.from_numpy(np.load("8751_positions_data.npy")).float()
-tgts = torch.from_numpy(np.divide(np.load("8751_positions_targets.npy"),1000)).float()
+inps = torch.from_numpy(np.load("104811_positions_data.npy")).float()
+tgts = torch.from_numpy(np.divide(np.load("104811_positions_targets.npy"),1000)).float()
 tgts = tgts[:,None]
 test_data = TensorDataset(inps, tgts)
 del(inps,tgts)
 
-inps = torch.from_numpy(np.load("104811_positions_data.npy")).float()
-tgts = torch.from_numpy(np.divide(np.load("104811_positions_targets.npy"),1000)).float()
+inps = torch.from_numpy(np.load("1050788_positions_data.npy")).float()
+tgts = torch.from_numpy(np.divide(np.load("1050788_positions_targets.npy"),1000)).float()
 tgts = tgts[:,None]
 training_data = TensorDataset(inps, tgts)
 del(inps,tgts)
@@ -103,14 +103,18 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
 
-        self.conv = nn.Conv2d(7, 32, 3, stride= 1, padding= 0)
+        self.convA1 = nn.Conv2d(7, 32, 3, stride= 1, padding= 1)
+        self.convA2 = nn.Conv2d(32, 32, 3, stride= 1, padding= 0)
+
         self.flatten = nn.Flatten()
+
         self.fc1 = nn.Linear(1152, 64)
         self.fc2 = nn.Linear(64, 1)
         
 
     def forward(self, x):
-        x = self.conv(x)
+        x = self.convA1(x)
+        x = self.convA2(x)
         x = F.relu(x)
         x = self.flatten(x)
         x = self.fc1(x)
@@ -136,7 +140,7 @@ class NeuralNetwork(nn.Module):
 #         output = torch.sigmoid(x)
 #         return output
 
-writer = SummaryWriter(f'runs/lr_{learning_rate}m_{momentum}two_conv 64')
+writer = SummaryWriter(f'runs/lr_{learning_rate}m_{momentum}double conv 64_large_dataset')
 model = NeuralNetwork()
 dataiter = iter(train_dataloader)
 inps,tgts = dataiter.next()
@@ -168,7 +172,7 @@ def train(dataloader, model, loss_fn, optimizer, epoch):
 
         writer.add_scalar('training loss',
                         lossLin,
-                        epoch* len(train_dataloader)+ batch)
+                        (epoch* len(train_dataloader)+ batch)/10)
 
         if batch % 64 == 0:
             print(f"loss: {loss:>7f}")

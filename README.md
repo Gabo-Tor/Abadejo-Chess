@@ -5,12 +5,14 @@ Neural? Python Chess AI
 
 This aims to be a simple and inefficient chess engine programed in Python for learning about AI, PyTorch and dataset generation
 
+![GUI](./GUI.png)
+
 ## Use
 
 Runs using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 
 Human move: Makes the SAN notated move followed by an enemy computer move
-Computer move: Makes a move using the engine for the side currently plaing
+Computer move: Makes a move using the engine for the side currently playing
 
 
 ## Dependancies
@@ -27,8 +29,8 @@ optional:
 ## Objetives:
 
 - [ ] Make a chess engine that can beat me
-- [ ] Use a CNN for eval
-- [ ] Learn more about PyTorch and dataset generation
+- [x] Use a CNN for eval
+- [x] Learn more about PyTorch and dataset generation
 
 ## TODO:
 
@@ -48,4 +50,4 @@ optional:
 - [x] Tranposition tables
 - [ ] iterative deepening
 - [ ] Aspiration Window
-- [ ] Neural network evaluation
+- [x] Neural network evaluation

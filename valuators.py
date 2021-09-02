@@ -1,6 +1,7 @@
 import chess
 import numpy as np
 from neural_valuator import *
+from chess.polyglot import zobrist_hash
 
 materialValues = {chess.PAWN:   100,
                   chess.BISHOP: 333,
@@ -24,8 +25,8 @@ chess.PAWN:
     1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
     1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
     1.00, 1.05, 1.10, 1.15, 1.15, 0.90, 1.00, 1.00,
-    1.00, 1.00, 1.15, 1.20, 1.20, 0.90, 1.00, 1.00,
-    1.00, 1.00, 1.15, 1.20, 1.20, 0.90, 1.00, 1.00,
+    1.00, 1.00, 1.20, 1.40, 1.40, 0.90, 1.00, 1.00,
+    1.00, 1.00, 1.20, 1.40, 1.40, 0.90, 1.00, 1.00,
     1.00, 1.05, 1.10, 1.15, 1.15, 0.90, 1.00, 1.00,
     1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
     1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00,
@@ -59,6 +60,7 @@ chess.KING:
 # castling rigths usually are valued as one pawn
 
 def heuristicValue(board):
+
   ## hand coded evaluation using features and domain knowledge
 
   # Using modern valuations for pieces
@@ -79,11 +81,6 @@ def heuristicValue(board):
   # we compute the real advantage, pieces are more valuble when there is less pieces
   materialValue = (Wvalue-Bvalue) 
 
-  if board.is_checkmate():
-    if board.turn == chess.WHITE:
-      return -99999
-    else:
-      return 99999
   if board.is_stalemate() or board.is_insufficient_material():
     return 0
   else:
@@ -99,22 +96,44 @@ def heuristicValue(board):
       WMvalue = len(list(board.legal_moves))
       board.turn = chess.BLACK
     movilityValue = WMvalue - BMvalue
+    # print(f"Material Val: {materialValue} Movility Val: {max(Wvalue, Bvalue) * movilityValue /20000}")
+    return materialValue + max(Wvalue, Bvalue) * movilityValue /20000
 
-    return materialValue + max(Wvalue, Bvalue) * movilityValue /2000
+def makeMove(board):
+  global valueTable
+  global posEvaluated
+  posEvaluated = 0
+  valueTable = [dict() for x in range(8)]
+  moveValues = list(moveValue(board, move) for move in board.legal_moves)
+
+
+  if board.turn == chess.WHITE:
+    nMove = np.argmax(moveValues) # this is probably not efficient
+  else:
+    nMove = np.argmin(moveValues) # this is probably not efficient
+  nextMove = list(board.legal_moves)[nMove] 
+
+  print(f"evaluated {posEvaluated} positions, hashed {len(valueTable[0])} positions")
+
+  return nextMove, moveValue(board, nextMove)
+
 
 def moveValue(board, move):
+  global valueTable
   ## gives the value for a move in the given board using some evaluation
+
   board.push(move)
   value = minimaxAB(board)
   board.pop()
+
   return value
 
 def minimax(board, depth = 2):
   ## evaluates position to a depth using minimax
 
   if depth == 0:
-    # return neuralValuator.NeuralValue(board)
-    return heuristicValue(board)
+    return neuralValuator.NeuralValue(board)
+    # return heuristicValue(board)
 
   if board.turn == chess.WHITE:
     value = -np.inf
@@ -134,64 +153,76 @@ def minimax(board, depth = 2):
     return value
 
 
+
 def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
+  global valueTable
+  boardHash = zobrist_hash(board)
   ## evaluates position to a depth using minimax with alpha beta pruning
-
-  if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
-    if len(list(move for move in board.legal_moves if board.is_capture(move)))>0: #  node is not quiet
-      return quiescence_search(board, depth = 0, alpha = alpha, beta =  beta)
-    else:
-      # return neuralValuator.NeuralValue(board)
-      return heuristicValue(board)
-      
-
-  if board.turn == chess.WHITE:
-    value = -np.inf
-    for move in board.legal_moves:
-      if board.is_capture(move):
-        board.push(move)
-        value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-        board.pop()
-
-        if value>= beta:
-          break
-        alpha = max(alpha, value)
-
-    for move in board.legal_moves:
-      if not board.is_capture(move):
-        board.push(move)
-        value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-        board.pop()
-
-        if value>= beta:
-          break
-        alpha = max(alpha, value)
-
-
-    return value
+  global posEvaluated
+  posEvaluated += 1
+  if boardHash in valueTable[depth]:
+    
+    return valueTable[depth][boardHash]
 
   else:
-    value = np.inf
-    for move in board.legal_moves:
-      if board.is_capture(move):
-        board.push(move)
-        value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-        board.pop()
+    if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
+      if len(list(move for move in board.legal_moves if board.is_capture(move)))>0: #  node is not quiet
+        
+        value = quiescence_search(board, depth = 0, alpha = alpha, beta =  beta)
+        valueTable[depth][boardHash] = value
+        return value
+      else:
+        # value = neuralValuator.NeuralValue(board)
+        value = heuristicValue(board)
+        valueTable[depth][boardHash] = value
+        return value
+        
 
-        if value<= alpha:
-          break
-        beta = min(beta, value)
+    if board.turn == chess.WHITE:
+      value = -np.inf
+      for move in board.legal_moves:
+        if board.is_capture(move):
+          board.push(move)
+          value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
 
-    for move in board.legal_moves:
-      if not board.is_capture(move):
-        board.push(move)
-        value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
-        board.pop()
+          if value>= beta:
+            break
+          alpha = max(alpha, value)
 
-        if value<= alpha:
-          break
-        beta = min(beta, value)
+      for move in board.legal_moves:
+        if not board.is_capture(move):
+          board.push(move)
+          value = max(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
 
+          if value>= beta:
+            break
+          alpha = max(alpha, value)
+
+    else:
+      value = np.inf
+      for move in board.legal_moves:
+        if board.is_capture(move):
+          board.push(move)
+          value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
+
+          if value<= alpha:
+            break
+          beta = min(beta, value)
+
+      for move in board.legal_moves:
+        if not board.is_capture(move):
+          board.push(move)
+          value = min(value, minimaxAB(board, depth-1, alpha = alpha, beta =  beta))
+          board.pop()
+
+          if value<= alpha:
+            break
+          beta = min(beta, value)
+
+    valueTable[depth][boardHash] = value
     return value
 
 
