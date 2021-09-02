@@ -10,14 +10,8 @@ materialValues = {chess.PAWN:   100,
                   chess.QUEEN:  950,
                   chess.KING: 9999}
 
-# materialValues = {chess.PAWN:   100,
-#                   chess.BISHOP: 300,
-#                   chess.KNIGHT: 300,
-#                   chess.ROOK:   500,
-#                   chess.QUEEN:  900,
-#                   chess.KING: 9999}
     
-# knigths on the rim are dim this is 50% slower than using just the number
+# knigths on the rim are dim, this is 50% slower than using just the number
 pieceSquare =  {
 
 chess.PAWN: 
@@ -57,7 +51,7 @@ chess.KING:
     200,  200, 200, 200, 200, 200, 200, 200,
     200,  201, 200, 200, 200, 200, 201, 200
 ] }
-# castling rigths usually are valued as one pawn
+# castling rigths usually are evaluated as one pawn in early game
 
 def heuristicValue(board):
 
@@ -227,6 +221,7 @@ def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
 
 
 def quiescence_search(board, depth = 99, alpha = -np.inf, beta = np.inf):
+  ## evaluates position to a depth using quiescence search
 
   if len(list(move for move in board.legal_moves if board.is_capture(move)))== 0\
      or board.is_stalemate() or board.is_insufficient_material() or depth == 0: #  node is quiet

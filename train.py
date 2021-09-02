@@ -18,7 +18,6 @@ momentum = 0.1
 random_seed = 1 # We are setting some seeds by hand BUT we use CUDA for faster training, so training is not deterministic see: https://pytorch.org/docs/stable/notes/randomness.html
 torch.manual_seed(random_seed)
 
-
 # #Custom datasets are cool but, how about not reinventing the wheel
 # class ColorsDataset(Dataset):
 #     def __init__(self, transforms=None):
@@ -204,8 +203,6 @@ print("Done!")
 writer.close()
 
 torch.save(model, 'model.pt')
-
-
 
 for x, y in test_dataloader:
     # print(f"X:{x[31:32,:,:,:]}")

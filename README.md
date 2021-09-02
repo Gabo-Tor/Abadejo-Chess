@@ -9,7 +9,7 @@ This aims to be a simple and inefficient chess engine programed in Python for le
 
 ## Use
 
-Runs using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
+Run app.py with Python3, it works using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 
 - Human move: Makes the SAN notated move followed by an enemy computer move
 - Computer move: Makes a move using the engine for the side currently playing
