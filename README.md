@@ -24,16 +24,22 @@ Run app.py with Python3, it works using flask on localhost, go to http://127.0.0
 * [flask](https://pypi.org/project/Flask/): Interface
   
 optional:
-* [PyTorch](https://pypi.org/project/torch/): Neural evaluation
+* [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pipn conda version is old)
 
 ## Objetives:
 
-- [ ] Make a chess engine that can beat me
+- [ ] Make a chess engine that can beat me :sunglasses:
 - [x] Use a CNN for eval
 - [x] Learn more about PyTorch and dataset generation
 
 ## TODO:
 
+- [ ] User input via clicking
+- [ ] Info in the webpage
+- [ ] NegaMax
+- [ ] Iterative deepening
+- [ ] Aspiration Window
+- [ ] Pypy
 - [x] Piece value heuristic
 - [x] MiniMax
 - [x] Board rendering
@@ -43,11 +49,7 @@ optional:
 - [x] Move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
 - [x] Quiescence search
 - [x] User input via submit field
-- [ ] Info in the webpage
 - [x] Automatic enemy move
-- [ ] User input via clicking
 - [x] Zobrist Hashing
 - [x] Tranposition tables
-- [ ] Iterative deepening
-- [ ] Aspiration Window
 - [x] Neural network evaluation
