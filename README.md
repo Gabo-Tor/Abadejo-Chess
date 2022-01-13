@@ -1,4 +1,4 @@
-#  ♙♘♗♖♕♔ Abadejo-Chess ♚♛♜♝♞♟
+#  ♘♗♖♕♔ Abadejo-Chess ♚♛♜♝♞
 A Neural Chess AI in Python 
 ## ♙ Description
 
@@ -34,7 +34,7 @@ optional:
 ## ♙ TODO:
 
 - [ ] User input via clicking
-- [ ] Info in the webpage
+- [x] Info in the webpage
 - [ ] NegaMax
 - [ ] Iterative deepening
 - [ ] Aspiration Window

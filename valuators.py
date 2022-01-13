@@ -53,6 +53,22 @@ chess.KING:
 ] }
 # castling rigths usually are evaluated as one pawn in early game
 
+
+def countMaterial(board): 
+
+  ## count material for each side using simple piece value
+
+  simpleMaterialValues = {chess.PAWN: 1,chess.BISHOP: 3,chess.KNIGHT: 3,chess.ROOK: 5,chess.QUEEN: 9,chess.KING: 999}
+  Bvalue, Wvalue = 0, 0
+
+  for piece in simpleMaterialValues.keys():
+    Bvalue += board.pieces(piece, chess.BLACK).tolist().count(True)* simpleMaterialValues[piece]
+    Wvalue += board.pieces(piece, chess.WHITE).tolist().count(True)* simpleMaterialValues[piece]
+
+  return Wvalue-Bvalue
+
+
+
 def heuristicValue(board):
 
   ## hand coded evaluation using features and domain knowledge
