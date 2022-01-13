@@ -1,13 +1,12 @@
-# Abadejo-Chess
-Neural? Python Chess AI
-
-## Description
+#  ♙♘♗♖♕♔ Abadejo-Chess ♚♛♜♝♞♟
+A Neural Chess AI in Python 
+## ♙ Description
 
 This aims to be a simple and inefficient chess engine programed in Python for learning about AI, PyTorch and dataset generation
 
 ![GUI](./GUI.png)
 
-## Use
+## ♙ Use
 
 Run app.py with Python3, it works using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 
@@ -15,7 +14,7 @@ Run app.py with Python3, it works using flask on localhost, go to http://127.0.0
 - Computer move: Makes a move using the engine for the side currently playing
 
 
-## Dependancies
+## ♙ Dependancies
 
 **Python 3** of course
 
@@ -26,13 +25,13 @@ Run app.py with Python3, it works using flask on localhost, go to http://127.0.0
 optional:
 * [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pipn conda version is old)
 
-## Objetives:
+## ♙ Objetives:
 
 - [ ] Make a chess engine that can beat me :sunglasses:
 - [x] Use a CNN for eval
 - [x] Learn more about PyTorch and dataset generation
 
-## TODO:
+## ♙ TODO:
 
 - [ ] User input via clicking
 - [ ] Info in the webpage
