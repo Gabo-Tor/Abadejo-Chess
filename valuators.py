@@ -1,4 +1,5 @@
 import chess
+import time
 import numpy as np
 from neural_valuator import *
 from chess.polyglot import zobrist_hash
@@ -58,7 +59,7 @@ def countMaterial(board):
 
   ## count material for each side using simple piece value
 
-  simpleMaterialValues = {chess.PAWN: 1,chess.BISHOP: 3,chess.KNIGHT: 3,chess.ROOK: 5,chess.QUEEN: 9,chess.KING: 999}
+  simpleMaterialValues = {chess.PAWN: 1,chess.BISHOP: 3,chess.KNIGHT: 3,chess.ROOK: 5,chess.QUEEN: 9,chess.KING: 200}
   Bvalue, Wvalue = 0, 0
 
   for piece in simpleMaterialValues.keys():
@@ -77,45 +78,84 @@ def heuristicValue(board):
   # TODO: piece square table reversible
 
   Bvalue, Wvalue, materialValue = 0,0,0
-
-  for piece in materialValues.keys():
-
-    Bvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.BLACK).tolist(), pieceSquare[piece] ))
-    Wvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.WHITE).tolist(), pieceSquare[piece] ))
-    # Bvalue += board.pieces(piece, chess.BLACK).tolist().count(True)* materialValues[piece]
-    # Wvalue += board.pieces(piece, chess.WHITE).tolist().count(True)* materialValues[piece]
-
-  # TODO: compute values for past, conected, isoleted pawns 
-  # https://es.wikipedia.org/wiki/Valor_relativo_de_las_piezas_de_ajedrez
-
-  # we compute the real advantage, pieces are more valuble when there is less pieces
-  materialValue = (Wvalue-Bvalue) 
-
   if board.is_stalemate() or board.is_insufficient_material():
     return 0
+
   else:
 
+    for piece in materialValues.keys():
+
+      # Bvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.BLACK).tolist(), pieceSquare[piece] ))
+      # Wvalue += sum(map(lambda x,y:x*y, board.pieces(piece, chess.WHITE).tolist(), pieceSquare[piece] ))
+      # Bvalue += board.pieces(piece, chess.BLACK).tolist().count(True)* materialValues[piece]
+      # Wvalue += board.pieces(piece, chess.WHITE).tolist().count(True)* materialValues[piece]
+      # Bvalue += np.sum(np.multiply(board.pieces(piece, chess.BLACK).tolist(), pieceSquare[piece]))
+      # Wvalue += np.sum(np.multiply(board.pieces(piece, chess.WHITE).tolist(), pieceSquare[piece]))
+    
+      # this is faster than combinations above 
+      for i, pos in enumerate(board.pieces(piece, chess.BLACK).tolist()):
+        if pos:
+          Bvalue += pieceSquare[piece][i]
+
+      for i, pos in enumerate(board.pieces(piece, chess.WHITE).tolist()):
+        if pos:
+          Wvalue += pieceSquare[piece][i]
+
+
+    # TODO: compute values for past, conected, isoleted pawns 
+    # https://es.wikipedia.org/wiki/Valor_relativo_de_las_piezas_de_ajedrez
+
+    # we compute the real advantage, pieces are more valuble when there is less pieces
+    materialValue = (Wvalue-Bvalue) 
+
+  # using pseudolegal instead of leag because is 30% faster and gives a ok result for this
     if board.turn == chess.WHITE:
-      WMvalue = len(list(board.legal_moves))
+      WMvalue = len(list(board.pseudo_legal_moves))
       board.turn = chess.BLACK
-      BMvalue = len(list(board.legal_moves))
+      BMvalue = len(list(board.pseudo_legal_moves))
       board.turn = chess.WHITE
     else:
-      BMvalue = len(list(board.legal_moves))
+      BMvalue = len(list(board.pseudo_legal_moves))
       board.turn = chess.WHITE
-      WMvalue = len(list(board.legal_moves))
+      WMvalue = len(list(board.pseudo_legal_moves))
       board.turn = chess.BLACK
     movilityValue = WMvalue - BMvalue
     # print(f"Material Val: {materialValue} Movility Val: {max(Wvalue, Bvalue) * movilityValue /20000}")
     return materialValue + max(Wvalue, Bvalue) * movilityValue /20000
 
+def simpleHeuristicValue(board):
+  ## very simple heuristic
+  # Using modern valuations for pieces
+  Bvalue, Wvalue = 0,0
+
+  if board.is_stalemate() or board.is_insufficient_material():
+    return 0
+  else:  
+    for piece in materialValues:
+    # this is faster than combinations above 
+      for pos in board.pieces(piece, chess.BLACK):
+        if pos:
+          Bvalue += materialValues[piece]
+      for pos in board.pieces(piece, chess.WHITE):
+        if pos:
+          Wvalue += materialValues[piece]
+    return (Wvalue-Bvalue)
+
 def makeMove(board):
   global valueTable
   global posEvaluated
-  posEvaluated = 0
-  valueTable = [dict() for x in range(8)]
-  moveValues = list(moveValue(board, move) for move in board.legal_moves)
+  global hashedPos
+  sTime = time.perf_counter()
+  posEvaluated, hashedPos = 0, 0
 
+  valueTable = [[dict() for x in range(8)]for y in range(8)]
+
+
+  for d in range(99):
+    print(f"evaluating at depth: {d}")
+    moveValues = list(moveValue(board, move, depth= d, maxDepth= d) for move in board.legal_moves)
+    if (time.perf_counter()-sTime)> 2:
+      break
 
   if board.turn == chess.WHITE:
     nMove = np.argmax(moveValues) # this is probably not efficient
@@ -123,20 +163,52 @@ def makeMove(board):
     nMove = np.argmin(moveValues) # this is probably not efficient
   nextMove = list(board.legal_moves)[nMove] 
 
-  print(f"evaluated {posEvaluated} positions, hashed {len(valueTable[0])} positions")
+  print(f"evaluated {len(valueTable[d][0])} positions, hashed {hashedPos} positions,\nPercentage: {round(100*hashedPos/len(valueTable[d][0]),2)}% Time: {round(time.perf_counter()-sTime,2)}s")
 
-  return nextMove, moveValue(board, nextMove)
+  return nextMove, moveValues[nMove]/100
 
 
-def moveValue(board, move):
-  global valueTable
+def moveValue(board, move, depth = 0, maxDepth= 0):
   ## gives the value for a move in the given board using some evaluation
 
   board.push(move)
-  value = minimaxAB(board)
+  value = negamaxAB(board, depth = depth, maxDepth= maxDepth)
   board.pop()
 
   return value
+
+
+def negamaxAB(board, depth = 0, maxDepth = 0, alpha = -np.inf, beta = np.inf, color = 1):
+  boardHash = zobrist_hash(board)
+  global hashedPos
+
+  for hashDepth in range(depth, len(valueTable[maxDepth])):
+    if boardHash in valueTable[maxDepth][hashDepth]:
+      hashedPos +=1
+      return valueTable[maxDepth][hashDepth][boardHash]
+
+  if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
+    value = color * simpleHeuristicValue(board)
+    valueTable[maxDepth][depth][boardHash] = value 
+    return value 
+    
+  value = -np.inf
+
+  for move in board.legal_moves:
+    board.push(move)
+    value = max(value, -negamaxAB( board, depth-1, maxDepth= maxDepth, alpha = -beta, beta = -alpha, color = -color))
+    board.pop()
+
+    alpha = max(alpha, value)
+
+    if alpha >= beta:
+      break
+
+
+
+  valueTable[maxDepth][depth][boardHash] = alpha
+  return alpha
+
 
 def minimax(board, depth = 2):
   ## evaluates position to a depth using minimax
@@ -163,7 +235,6 @@ def minimax(board, depth = 2):
     return value
 
 
-
 def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
   global valueTable
   boardHash = zobrist_hash(board)
@@ -182,7 +253,7 @@ def minimaxAB(board, depth = 2, alpha = -np.inf, beta = np.inf):
         valueTable[depth][boardHash] = value
         return value
       else:
-        # value = neuralValuator.NeuralValue(board)
+        # value = neuralValuator.NeuralValue(board).item()
         value = heuristicValue(board)
         valueTable[depth][boardHash] = value
         return value
@@ -241,7 +312,7 @@ def quiescence_search(board, depth = 99, alpha = -np.inf, beta = np.inf):
 
   if len(list(move for move in board.legal_moves if board.is_capture(move)))== 0\
      or board.is_stalemate() or board.is_insufficient_material() or depth == 0: #  node is quiet
-    # return neuralValuator.NeuralValue(board)
+    # return neuralValuator.NeuralValue(board).item()
     return heuristicValue(board)
 
   else:      

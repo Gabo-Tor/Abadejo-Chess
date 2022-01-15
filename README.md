@@ -10,7 +10,9 @@ This aims to be a simple and inefficient chess engine programed in Python for le
 
 Run app.py with Python3, it works using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
 
-- Human move: Makes the SAN notated move followed by an enemy computer move
+- Simply drag the piece to the desired square, ilegal moves are rejected, promoting to queen is automatic, followed autmatically by an enemy computer move
+  or:
+- Human move: Makes the SAN notated move followed autmatically by an enemy computer move
 - Computer move: Makes a move using the engine for the side currently playing
 
 
@@ -23,7 +25,9 @@ Run app.py with Python3, it works using flask on localhost, go to http://127.0.0
 * [flask](https://pypi.org/project/Flask/): Interface
   
 optional:
-* [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pipn conda version is old)
+* [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pip, the conda version is too old)
+* cProfile and snakeviz: for profiling to optimaze a little more
+ 
 
 ## ♙ Objetives:
 
@@ -33,9 +37,10 @@ optional:
 
 ## ♙ TODO:
 
-- [ ] User input via clicking
+- [x] User input via clicking
 - [x] Info in the webpage
-- [ ] NegaMax
+- [] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
+- [x] NegaMax
 - [ ] Iterative deepening
 - [ ] Aspiration Window
 - [ ] Pypy

@@ -1,11 +1,20 @@
+<!DOCTYPE html>
 <html>
+
+<head>
+    <title>Abadejo-chess</title>
+    <link rel="stylesheet" href="static/css/chessboard-1.0.0.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="static/js/chessboard-1.0.0.min.js"></script>
+</head>
 
 <body style="background-color:#8b9bad">
     <div>
         <table>
             <tr>
                 <td>
-                    <img src="board.svg"></img>
+                    <div id="myBoard" style="width: 550px"></div>
+                    <!--img src="board.svg"></im-->
                 </td>
                 <td>
                     <table>
@@ -21,7 +30,7 @@
                                 <table>
                                     {% for m in moves %}
                                     {% set i = loop.index0 %}
-                                    {% if not (i) % 40 %}
+                                    {% if not (i) % 38 %}
                                 </table>
                             </td>
                             <td>
@@ -64,12 +73,37 @@
         </div>
     </div>
 
+    <script>
+        var board = null
+        var $status = $('#status')
+        var $fen = $('#fen')
+        var $pgn = $('#pgn')
+
+        function onDrop(source, target, piece, newPos, oldPos, orientation) {
+            console.log('UCI: ' + source + target)
+            $.post('/human_move',{hmove: 'UCI: ' + source + target})
+            .done(function(data){
+                location.reload()
+            });
+            
+        }
+
+        var config = {
+            draggable: true,
+            position: '{{fen}}',
+            onDrop: onDrop,
+            pieceTheme: 'static/img/chesspieces/wikipedia/{piece}.png',
+        }
+        board = Chessboard('myBoard', config)
+
+
+    </script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type=text/javascript>
             $(function() {
               $('a#test').on('click', function(e) {
                 e.preventDefault()
-                $.get('/move',
+                $.post('/move',
                     function(data) {
                     location.reload();
                 });

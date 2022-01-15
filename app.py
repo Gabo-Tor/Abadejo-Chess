@@ -4,59 +4,44 @@ import numpy as np
 import time
 import traceback
 from valuators import *
-from flask import Flask, Response, render_template, request, redirect
+from flask import Flask, Response, render_template, request, redirect, url_for
 
 # board =  chess.Board("r1b1k1nr/ppp2ppp/1bn1pq2/3p4/3P4/P3BN1P/1PP1PPPR/RNQ1KB2 b Qkq - 4 7")
+# board =  chess.Board("5rk1/Ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R w Kq - 0 1")
 # board =  chess.Board("r1b2rk1/ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R b Kq - 0 1")
 board =  chess.Board()
+moveList = []
+moveTime, value, materialCount = 0, 0, 0
+
 # board.push_san("e4")
-
-def main():
-
-  print(board)
-
-  while not board.is_game_over():
-
-    # human move
-    print(board.legal_moves)
-    nextMove = input()
-    board.push(board.parse_san(nextMove))
-    print("----------\nply: %d \n" %(board.ply()))
-    startT = time.time()
-    print(board)
     
-    # Computer move
-    nMove = np.argmin(list(moveValue(board, move) for move in board.legal_moves)) # this is probably not efficient
-    nextMove = list(board.legal_moves)[nMove] 
-
-    print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, moveValue(board, nextMove), nextMove, time.time()- startT))    
-    board.push(nextMove)
-
-
-    print(board)
-    
-
 app = Flask(__name__)
 
 @app.route("/")
 def init():
-  return render_template('index.html')
+  if board.is_game_over():
+    return render_template('index.html', fen = board.fen().split(' ',1)[0], moves= moveList, eval= value, moveTime= "Game Over!!!", pCount = materialCount)
+  else:
+    return render_template('index.html', fen = board.fen().split(' ',1)[0], moves= moveList, eval= value, moveTime= moveTime, pCount = materialCount)
 
 @app.route("/board.svg")
 def draw_board():
   if board.ply() >1:
-    return Response(chess.svg.board(board, size= 600, colors= {'square light': '#d5d5d5','square dark': '#547c48','margin': '#000000', 'coord': '#ffffff'},lastmove= board.peek()), mimetype='image/svg+xml')
+    return Response(chess.svg.board(board, size= 550, colors= {'square light': '#f0f0f0','square dark': '#8b9bad','margin': '#000000', 'coord': '#ffffff'},lastmove= board.peek()), mimetype='image/svg+xml')
   else:
-    return Response(chess.svg.board(board, size= 600, colors= {'square light': '#d5d5d5','square dark': '#547c48','margin': '#000000', 'coord': '#ffffff'}), mimetype='image/svg+xml')
+    return Response(chess.svg.board(board, size= 550, colors= {'square light': '#f0f0f0','square dark': '#8b9bad','margin': '#000000', 'coord': '#ffffff'}), mimetype='image/svg+xml')
 
-@app.route("/move")
+@app.route("/move", methods=['POST'])
 def move():
-
+  global value, moveTime, materialCount
   startT = time.time()
   nextMove, value = makeMove(board) 
-
-  print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, value, nextMove, time.time()- startT))    
+  value = round(value,2)
+  moveTime = round(time.time()- startT,2)
+  print("----------\nply: %d value: %f move: %s time: %f\n" %(board.ply()+1, value, nextMove, moveTime))    
+  moveList.append(board.san(nextMove))
   board.push(nextMove)
+  materialCount = countMaterial(board)
   return ""
 
 @app.route("/human_move", methods=['POST'])
@@ -64,17 +49,33 @@ def human_move():
   startT = time.time()
   print("the recived txt is")
   print(request.form.get('hmove'))
-  nextMove = request.form.get('hmove')
-  try:
-    print("----------\nply: %d move: %s time: %f\n" %(board.ply()+1, board.parse_san(nextMove), time.time()- startT))    
-    board.push(board.parse_san(nextMove))
-    move()
-  except:
-    traceback.print_exc()
+  if 'UCI' in request.form.get('hmove'):
+    print(chess.Move.from_uci(request.form.get('hmove')[-4:]))
+    nextMove = chess.Move.from_uci(request.form.get('hmove')[-4:])
+  else:
+    nextMove = board.parse_san(request.form.get('hmove'))
+  # TODO: add feedback for ilegal moves
+  if nextMove in board.legal_moves:
+    try:
+      print("----------\nply: %d move: %s time: %f\n" %(board.ply()+1, nextMove, time.time()- startT))    
+      moveList.append(nextMove)
+      board.push(nextMove)
+      move()
+    except:
+      traceback.print_exc()
+  elif chess.Move.from_uci(request.form.get('hmove')[-4:]+'q') in board.legal_moves: #make this more elegant, if a movement is a non explicit prmotion, defaults to queen
+    try:
+      nextMove = chess.Move.from_uci(request.form.get('hmove')[-4:]+'q')
+      print("----------\nply: %d move: %s time: %f\n" %(board.ply()+1, nextMove, time.time()- startT))    
+      moveList.append(nextMove)
+      board.push(nextMove)
+      move()
+    except:
+      traceback.print_exc()
 
   return redirect('/')
 
 if __name__ == "__main__":
   initNeuralValuator()
   app.run(debug= True)
-  # main()
+
