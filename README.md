@@ -39,7 +39,7 @@ optional:
 
 - [x] User input via clicking
 - [x] Info in the webpage
-- [] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
+- [ ] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
 - [x] NegaMax
 - [ ] Iterative deepening
 - [ ] Aspiration Window
