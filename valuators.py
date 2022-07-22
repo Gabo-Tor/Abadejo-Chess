@@ -1,7 +1,7 @@
 import chess
 import time
 import numpy as np
-from neural_valuator import NeuralValuator
+from neural_valuator import NeuralValuator, NeuralNetwork
 from chess.polyglot import zobrist_hash
 
 
