@@ -167,10 +167,14 @@ def makeMove(board):
     valueTable = [[dict() for x in range(8)] for y in range(8)]
 
     for d in range(99):
-        print(f"evaluating at depth: {d}")
+        print(f"\n\u001b[36m-Evaluating at depth: {d}\u001b[0m ", end="")
         moveValues = list(
             moveValue(board, move, depth=d, maxDepth=d) for move in board.legal_moves
         )
+        print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
+        print(f"Evaluated {len(valueTable[d][0])} pos | Hashed {hashedPos} pos")
+        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable[d][0]):.2f}% ↗")
+
         if (time.perf_counter() - sTime) > 3:
             break
 
@@ -179,10 +183,6 @@ def makeMove(board):
     else:
         nMove = np.argmin(moveValues)  # this is probably not efficient
     nextMove = list(board.legal_moves)[nMove]
-
-    print(
-        f"evaluated {len(valueTable[d][0])} positions, hashed {hashedPos} positions,\nPercentage: {round(100*hashedPos/len(valueTable[d][0]),2)}% Time: {round(time.perf_counter()-sTime,2)}s"
-    )
 
     return nextMove, moveValues[nMove] / 100
 
