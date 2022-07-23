@@ -1,5 +1,7 @@
-#  ♘♗♖♕♔ Abadejo-Chess ♚♛♜♝♞
-A Neural Chess AI in Python 
+# ♘♗♖♕♔ Abadejo-Chess ♚♛♜♝♞
+
+A Neural Chess AI in Python
+
 ## ♙ Description
 
 This aims to be a simple and inefficient chess engine programed in Python for learning about AI, PyTorch and dataset generation
@@ -8,34 +10,33 @@ This aims to be a simple and inefficient chess engine programed in Python for le
 
 ## ♙ Use
 
-Run app.py with Python3, it works using flask on localhost, go to http://127.0.0.1:5000/ for the move interface
+Run app.py with Python3, it works using flask on localhost, go to <http://127.0.0.1:5000/> for the move interface
 
 - Simply drag the piece to the desired square, ilegal moves are rejected, promoting to queen is automatic, followed autmatically by an enemy computer move
   or:
 - Human move: Makes the SAN notated move followed autmatically by an enemy computer move
 - Computer move: Makes a move using the engine for the side currently playing
 
-
 ## ♙ Dependancies
 
 **Python 3** of course
 
-* [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldnt have started the projet w/o this
-* [numpy](https://pypi.org/project/numpy/): Efficient data structures
-* [flask](https://pypi.org/project/Flask/): Interface
+- [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldnt have started the projet w/o this
+- [numpy](https://pypi.org/project/numpy/): Efficient data structures
+- [flask](https://pypi.org/project/Flask/): Interface
   
 optional:
-* [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pip, the conda version is too old)
-* cProfile and snakeviz: for profiling to optimaze a little more
- 
 
-## ♙ Objetives:
+- [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pip, the conda version is too old)
+- cProfile and snakeviz: for profiling to optimaze a little more
+
+## ♙ Objetives
 
 - [ ] Make a chess engine that can beat me :sunglasses:
 - [x] Use a CNN for eval
 - [x] Learn more about PyTorch and dataset generation
 
-## ♙ TODO:
+## ♙ TODO
 
 - [x] User input via clicking
 - [x] Info in the webpage
@@ -43,7 +44,7 @@ optional:
 - [x] NegaMax
 - [ ] Iterative deepening
 - [ ] Aspiration Window
-- [ ] Pypy
+- [x] ~~Pypy~~ (Pypy 3.7 seems 1% to 10% slower than Python 3.8)
 - [x] Piece value heuristic
 - [x] MiniMax
 - [x] Board rendering

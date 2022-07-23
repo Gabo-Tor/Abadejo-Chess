@@ -2,12 +2,14 @@ import chess
 import chess.svg
 import time
 import traceback
-from valuators import initNeuralValuator, countMaterial, makeMove, NeuralNetwork
-from flask import Flask, Response, render_template, request, redirect, url_for
+from valuators import countMaterial, makeMove  # noqa
+from flask import Flask, render_template, request, redirect, url_for  # noqa
+from flask.wrappers import Response
 
 # board =  chess.Board("r1b1k1nr/ppp2ppp/1bn1pq2/3p4/3P4/P3BN1P/1PP1PPPR/RNQ1KB2 b Qkq - 4 7")
 # board =  chess.Board("5rk1/Ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R w Kq - 0 1")
 # board =  chess.Board("r1b2rk1/ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R b Kq - 0 1")
+useNeuralValuator = False
 board = chess.Board()
 moveList = []
 moveTime, value, materialCount = 0, 0, 0
@@ -94,11 +96,11 @@ def human_move():
     startT = time.time()
     print("the recived txt is")
     print(request.form.get("hmove"))
-    if "UCI" in request.form.get("hmove"):
-        print(chess.Move.from_uci(request.form.get("hmove")[-4:]))
-        nextMove = chess.Move.from_uci(request.form.get("hmove")[-4:])
+    if "UCI" in str(request.form.get("hmove")):
+        print(chess.Move.from_uci(str(request.form.get("hmove"))[-4:]))
+        nextMove = chess.Move.from_uci(str(request.form.get("hmove"))[-4:])
     else:
-        nextMove = board.parse_san(request.form.get("hmove"))
+        nextMove = board.parse_san(str(request.form.get("hmove")))
     # TODO: add feedback for ilegal moves
     if nextMove in board.legal_moves:
         try:
@@ -109,12 +111,15 @@ def human_move():
             moveList.append(nextMove)
             board.push(nextMove)
             move()
-        except:
+        except AssertionError:
             traceback.print_exc()
     # make this more elegant, if a movement is a non explicit promotion, defaults to queen
-    elif chess.Move.from_uci(request.form.get("hmove")[-4:] + "q") in board.legal_moves:
+    elif (
+        chess.Move.from_uci(str(request.form.get("hmove"))[-4:] + "q")
+        in board.legal_moves
+    ):
         try:
-            nextMove = chess.Move.from_uci(request.form.get("hmove")[-4:] + "q")
+            nextMove = chess.Move.from_uci(str(request.form.get("hmove"))[-4:] + "q")
             print(
                 "----------\nply: %d move: %s time: %f\n"
                 % (board.ply() + 1, nextMove, time.time() - startT)
@@ -122,12 +127,13 @@ def human_move():
             moveList.append(nextMove)
             board.push(nextMove)
             move()
-        except:
+        except AssertionError:
             traceback.print_exc()
 
     return redirect("/")
 
 
 if __name__ == "__main__":
-    initNeuralValuator()
+    if useNeuralValuator:
+        initNeuralValuator()
     app.run(debug=True)

@@ -1,7 +1,6 @@
 import chess
 import time
 import numpy as np
-from neural_valuator import NeuralValuator, NeuralNetwork
 from chess.polyglot import zobrist_hash
 
 
@@ -172,7 +171,7 @@ def makeMove(board):
         moveValues = list(
             moveValue(board, move, depth=d, maxDepth=d) for move in board.legal_moves
         )
-        if (time.perf_counter() - sTime) > 2:
+        if (time.perf_counter() - sTime) > 3:
             break
 
     if board.turn == chess.WHITE:
