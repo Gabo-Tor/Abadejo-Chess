@@ -81,11 +81,11 @@
 
         function onDrop(source, target, piece, newPos, oldPos, orientation) {
             console.log('UCI: ' + source + target)
-            $.post('/human_move',{hmove: 'UCI: ' + source + target})
-            .done(function(data){
-                location.reload()
-            });
-            
+            $.post('/human_move', { hmove: 'UCI: ' + source + target })
+                .done(function (data) {
+                    location.reload()
+                });
+
         }
 
         var config = {
