@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from create_database import parse_board
-import numpy as np
+from numpy import divide
 import torch.nn.functional as F
 import chess
 
@@ -45,14 +45,14 @@ class NeuralValuator:
             state = parse_board(board)
             self.model.eval()
             with torch.no_grad():
-                pred = self.model(torch.from_numpy(np.divide(state, 1000)).float())
+                pred = self.model(torch.from_numpy(divide(state, 1000)).float())
             return pred
 
         else:
             state = parse_board(board.mirror())
             self.model.eval()
             with torch.no_grad():
-                pred = self.model(torch.from_numpy(np.divide(state, 1000)).float())
+                pred = self.model(torch.from_numpy(divide(state, 1000)).float())
             return 1.0 - pred
 
 

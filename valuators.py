@@ -2,6 +2,7 @@ import chess
 import time
 import numpy as np
 from chess.polyglot import zobrist_hash
+from neural_valuator import NeuralValuator
 
 
 materialValues = {
@@ -143,55 +144,54 @@ def simpleHeuristicValue(board):
     # Using modern valuations for pieces
     Bvalue, Wvalue = 0, 0
 
-    if board.is_stalemate() or board.is_insufficient_material():
-        return 0
-    else:
-        for piece in materialValues:
-            # this is faster than combinations above
-            for pos in board.pieces(piece, chess.BLACK):
-                if pos:
-                    Bvalue += materialValues[piece]
-            for pos in board.pieces(piece, chess.WHITE):
-                if pos:
-                    Wvalue += materialValues[piece]
-        return Wvalue - Bvalue
+    for piece in materialValues:
+        # this is faster than combinations above
+        for pos in board.pieces(piece, chess.BLACK):
+            if pos:
+                Bvalue += materialValues[piece]
+        for pos in board.pieces(piece, chess.WHITE):
+            if pos:
+                Wvalue += materialValues[piece]
+    return Wvalue - Bvalue
 
 
 def makeMove(board):
     global valueTable
     global posEvaluated
     global hashedPos
+    maxDepth = 4
     sTime = time.perf_counter()
     posEvaluated, hashedPos = 0, 0
+    moveValues = []
+    valueTable = [[dict() for x in range(maxDepth)] for y in range(maxDepth)]
 
-    valueTable = [[dict() for x in range(8)] for y in range(8)]
-
-    for d in range(99):
-        print(f"\n\u001b[36m-Evaluating at depth: {d}\u001b[0m ", end="")
+    for depth in range(maxDepth):
+        print(f"\n\u001b[36m-Evaluating at depth: {depth}\u001b[0m ", end="")
         moveValues = list(
-            moveValue(board, move, depth=d, maxDepth=d) for move in board.legal_moves
+            moveValue(board, move, depth=depth, maxDepth=depth)
+            for move in board.legal_moves
         )
         print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
-        print(f"Evaluated {len(valueTable[d][0])} pos | Hashed {hashedPos} pos")
-        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable[d][0]):.2f}% ↗")
+        print(f"Evaluated {len(valueTable[depth][0])} pos | Hashed {hashedPos} pos")
+        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable[depth][0]):.2f}% ↗")
 
-        if (time.perf_counter() - sTime) > 3:
+        if (time.perf_counter() - sTime) > 60:
             break
 
     if board.turn == chess.WHITE:
-        nMove = np.argmax(moveValues)  # this is probably not efficient
+        idxMove = np.argmax(moveValues)
     else:
-        nMove = np.argmin(moveValues)  # this is probably not efficient
-    nextMove = list(board.legal_moves)[nMove]
+        idxMove = np.argmin(moveValues)
+    nextMove = list(board.legal_moves)[idxMove]
 
-    return nextMove, moveValues[nMove] / 100
+    return nextMove, moveValues[idxMove] / 100
 
 
 def moveValue(board, move, depth=0, maxDepth=0):
     # gives the value for a move in the given board using some evaluation
 
     board.push(move)
-    value = negamaxAB(board, depth=depth, maxDepth=maxDepth)
+    value = negamaxHash(board, depth=depth, maxDepth=maxDepth)
     board.pop()
 
     return value
@@ -237,164 +237,73 @@ def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
     return alpha
 
 
-def minimax(board, depth=2):
-    # evaluates position to a depth using minimax
-
-    if depth == 0:
-        return neuralValuator.NeuralValue(board)
-        # return heuristicValue(board)
-
-    if board.turn == chess.WHITE:
-        value = -np.inf
-        for move in board.legal_moves:
-
-            board.push(move)
-            value = max(value, minimax(board, depth - 1))
-            board.pop()
-        return value
-
-    else:
-        value = np.inf
-        for move in board.legal_moves:
-            board.push(move)
-            value = min(value, minimax(board, depth - 1))
-            board.pop()
-        return value
-
-
-def minimaxAB(board, depth=2, alpha=-np.inf, beta=np.inf):
-    global valueTable
+def negamaxHash(board, depth=0, maxDepth=0, color=1):
     boardHash = zobrist_hash(board)
-    # evaluates position to a depth using minimax with alpha beta pruning
-    global posEvaluated
-    posEvaluated += 1
-    if boardHash in valueTable[depth]:
+    global hashedPos
 
-        return valueTable[depth][boardHash]
-
-    else:
-        if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
-            if (
-                len(list(move for move in board.legal_moves if board.is_capture(move)))
-                > 0
-            ):  #  node is not quiet
-
-                value = quiescence_search(board, depth=0, alpha=alpha, beta=beta)
-                valueTable[depth][boardHash] = value
-                return value
-            else:
-                # value = neuralValuator.NeuralValue(board).item()
-                value = heuristicValue(board)
-                valueTable[depth][boardHash] = value
-                return value
-
-        if board.turn == chess.WHITE:
-            value = -np.inf
-            for move in board.legal_moves:
-                if board.is_capture(move):
-                    board.push(move)
-                    value = max(
-                        value, minimaxAB(board, depth - 1, alpha=alpha, beta=beta)
-                    )
-                    board.pop()
-
-                    if value >= beta:
-                        break
-                    alpha = max(alpha, value)
-
-            for move in board.legal_moves:
-                if not board.is_capture(move):
-                    board.push(move)
-                    value = max(
-                        value, minimaxAB(board, depth - 1, alpha=alpha, beta=beta)
-                    )
-                    board.pop()
-
-                    if value >= beta:
-                        break
-                    alpha = max(alpha, value)
-
-        else:
-            value = np.inf
-            for move in board.legal_moves:
-                if board.is_capture(move):
-                    board.push(move)
-                    value = min(
-                        value, minimaxAB(board, depth - 1, alpha=alpha, beta=beta)
-                    )
-                    board.pop()
-
-                    if value <= alpha:
-                        break
-                    beta = min(beta, value)
-
-            for move in board.legal_moves:
-                if not board.is_capture(move):
-                    board.push(move)
-                    value = min(
-                        value, minimaxAB(board, depth - 1, alpha=alpha, beta=beta)
-                    )
-                    board.pop()
-
-                    if value <= alpha:
-                        break
-                    beta = min(beta, value)
-
-        valueTable[depth][boardHash] = value
-        return value
-
-
-def quiescence_search(board, depth=99, alpha=-np.inf, beta=np.inf):
-    # evaluates position to a depth using quiescence search
+    for hashDepth in range(depth, len(valueTable[maxDepth])):
+        if boardHash in valueTable[maxDepth][hashDepth]:
+            hashedPos += 1
+            return valueTable[maxDepth][hashDepth][boardHash]
 
     if (
-        len(list(move for move in board.legal_moves if board.is_capture(move))) == 0
-        or board.is_stalemate()
+        board.is_stalemate()
         or board.is_insufficient_material()
-        or depth == 0
-    ):  # node is quiet
-        # return neuralValuator.NeuralValue(board).item()
-        return heuristicValue(board)
+        or board.is_fifty_moves()
+    ):
+        value = 0
+        valueTable[maxDepth][depth][boardHash] = value
+        return value
 
-    else:
+    elif depth == 0:
+        value = color * simpleHeuristicValue(board)
+        valueTable[maxDepth][depth][boardHash] = value
+        return value
 
-        if board.turn == chess.WHITE:
-            value = -np.inf
-            for move in board.legal_moves:
-                if board.is_capture(move):
-                    board.push(move)
-                    value = max(
-                        value,
-                        quiescence_search(board, depth - 1, alpha=alpha, beta=beta),
-                    )
-                    board.pop()
+    value = -np.inf
 
-                    if value >= beta:
-                        break
-                    alpha = max(alpha, value)
+    for move in board.legal_moves:
+        board.push(move)
+        value = max(
+            value, -negamaxHash(board, depth - 1, maxDepth=maxDepth, color=-color)
+        )
+        board.pop()
 
-            return value
+    valueTable[maxDepth][depth][boardHash] = value
+    return value
 
-        else:
-            value = np.inf
-            for move in board.legal_moves:
-                if board.is_capture(move):
-                    board.push(move)
-                    value = min(
-                        value,
-                        quiescence_search(board, depth - 1, alpha=alpha, beta=beta),
-                    )
-                    board.pop()
 
-                    if value <= alpha:
-                        break
-                    beta = min(beta, value)
+def negamax(board, depth=0, maxDepth=0, color=1):
+    boardHash = zobrist_hash(board)
+    global hashedPos
 
-            return value
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_fifty_moves()
+    ):
+        value = 0
+        valueTable[maxDepth][depth][boardHash] = value
+        return value
+
+    elif depth == 0:
+        value = color * simpleHeuristicValue(board)
+        valueTable[maxDepth][depth][boardHash] = value
+        return value
+
+    value = -np.inf
+
+    for move in board.legal_moves:
+        board.push(move)
+        value = max(value, -negamax(board, depth - 1, maxDepth=maxDepth, color=-color))
+        board.pop()
+
+    valueTable[maxDepth][depth][boardHash] = value
+    return value
 
 
 def initNeuralValuator():
-    # This is an ugly way of doing this
+    # TODO This is an ugly way of doing this
     global neuralValuator
     neuralValuator = NeuralValuator()
 

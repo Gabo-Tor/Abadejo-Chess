@@ -2,7 +2,7 @@ import chess
 import chess.svg
 import time
 import traceback
-from valuators import countMaterial, makeMove  # noqa
+from valuators import countMaterial, makeMove, initNeuralValuator  # noqa
 from flask import Flask, render_template, request, redirect
 from flask.wrappers import Response
 import logging
