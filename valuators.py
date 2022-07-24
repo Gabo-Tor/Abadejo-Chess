@@ -71,17 +71,13 @@ def countMaterial(board):
         chess.QUEEN: 9,
         chess.KING: 200,
     }
-    Bvalue, Wvalue = 0, 0
 
-    for piece in simpleMaterialValues.keys():
-        Bvalue += (
-            board.pieces(piece, chess.BLACK).tolist().count(True)
-            * simpleMaterialValues[piece]
-        )
-        Wvalue += (
-            board.pieces(piece, chess.WHITE).tolist().count(True)
-            * simpleMaterialValues[piece]
-        )
+    Bvalue, Wvalue = 0, 0
+    for piece in simpleMaterialValues:
+        for pos in board.pieces(piece, chess.BLACK):
+            Bvalue += simpleMaterialValues[piece]
+        for pos in board.pieces(piece, chess.WHITE):
+            Wvalue += simpleMaterialValues[piece]
 
     return Wvalue - Bvalue
 
@@ -145,13 +141,11 @@ def simpleHeuristicValue(board):
     Bvalue, Wvalue = 0, 0
 
     for piece in materialValues:
-        # this is faster than combinations above
         for pos in board.pieces(piece, chess.BLACK):
-            if pos:
-                Bvalue += materialValues[piece]
+            Bvalue += materialValues[piece]
         for pos in board.pieces(piece, chess.WHITE):
-            if pos:
-                Wvalue += materialValues[piece]
+            Wvalue += materialValues[piece]
+
     return Wvalue - Bvalue
 
 
@@ -159,11 +153,11 @@ def makeMove(board):
     global valueTable
     global posEvaluated
     global hashedPos
-    maxDepth = 4
+    maxDepth = 5
     sTime = time.perf_counter()
     posEvaluated, hashedPos = 0, 0
     moveValues = []
-    valueTable = [[dict() for x in range(maxDepth)] for y in range(maxDepth)]
+    valueTable = dict()
 
     for depth in range(maxDepth):
         print(f"\n\u001b[36m-Evaluating at depth: {depth}\u001b[0m ", end="")
@@ -172,8 +166,8 @@ def makeMove(board):
             for move in board.legal_moves
         )
         print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
-        print(f"Evaluated {len(valueTable[depth][0])} pos | Hashed {hashedPos} pos")
-        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable[depth][0]):.2f}% ↗")
+        print(f"Evaluated {len(valueTable)} pos | Hashed {hashedPos} pos")
+        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable):.2f}% ↗")
 
         if (time.perf_counter() - sTime) > 60:
             break
@@ -184,6 +178,9 @@ def makeMove(board):
         idxMove = np.argmin(moveValues)
     nextMove = list(board.legal_moves)[idxMove]
 
+    for val, move in zip(moveValues, board.legal_moves):
+        print(move, ":", f"{val / 100:.2f}")
+
     return nextMove, moveValues[idxMove] / 100
 
 
@@ -191,24 +188,34 @@ def moveValue(board, move, depth=0, maxDepth=0):
     # gives the value for a move in the given board using some evaluation
 
     board.push(move)
-    value = negamaxHash(board, depth=depth, maxDepth=maxDepth)
+    value = negamaxAB(board, depth=depth, maxDepth=maxDepth)
     board.pop()
 
     return value
 
 
 def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
+    # TODO esto está mal implementado rehacer
     boardHash = zobrist_hash(board)
     global hashedPos
 
-    for hashDepth in range(depth, len(valueTable[maxDepth])):
-        if boardHash in valueTable[maxDepth][hashDepth]:
+    if boardHash in valueTable:
+        if valueTable[boardHash]["depth"] >= depth:
             hashedPos += 1
-            return valueTable[maxDepth][hashDepth][boardHash]
+            return valueTable[boardHash]["value"]
 
-    if depth == 0 or board.is_stalemate() or board.is_insufficient_material():
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_fifty_moves()
+    ):
+        value = 0
+        valueTable[boardHash] = {"depth": depth, "value": value}
+        return value
+
+    elif depth == 0:
         value = color * simpleHeuristicValue(board)
-        valueTable[maxDepth][depth][boardHash] = value
+        valueTable[boardHash] = {"depth": depth, "value": value}
         return value
 
     value = -np.inf
@@ -233,18 +240,19 @@ def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
         if alpha >= beta:
             break
 
-    valueTable[maxDepth][depth][boardHash] = alpha
+    valueTable[boardHash] = {"depth": alpha, "value": value}
     return alpha
 
 
 def negamaxHash(board, depth=0, maxDepth=0, color=1):
+    # Negamax using zoobrist hash
     boardHash = zobrist_hash(board)
     global hashedPos
 
-    for hashDepth in range(depth, len(valueTable[maxDepth])):
-        if boardHash in valueTable[maxDepth][hashDepth]:
+    if boardHash in valueTable:
+        if valueTable[boardHash]["depth"] >= depth:
             hashedPos += 1
-            return valueTable[maxDepth][hashDepth][boardHash]
+            return valueTable[boardHash]["value"]
 
     if (
         board.is_stalemate()
@@ -252,12 +260,12 @@ def negamaxHash(board, depth=0, maxDepth=0, color=1):
         or board.is_fifty_moves()
     ):
         value = 0
-        valueTable[maxDepth][depth][boardHash] = value
+        valueTable[boardHash] = {"depth": depth, "value": value}
         return value
 
     elif depth == 0:
         value = color * simpleHeuristicValue(board)
-        valueTable[maxDepth][depth][boardHash] = value
+        valueTable[boardHash] = {"depth": depth, "value": value}
         return value
 
     value = -np.inf
@@ -269,11 +277,12 @@ def negamaxHash(board, depth=0, maxDepth=0, color=1):
         )
         board.pop()
 
-    valueTable[maxDepth][depth][boardHash] = value
+    valueTable[boardHash] = {"depth": depth, "value": value}
     return value
 
 
 def negamax(board, depth=0, maxDepth=0, color=1):
+    # simple negamax zoobrist hash is not used, just computed so times are compararble
     boardHash = zobrist_hash(board)
     global hashedPos
 
@@ -283,12 +292,12 @@ def negamax(board, depth=0, maxDepth=0, color=1):
         or board.is_fifty_moves()
     ):
         value = 0
-        valueTable[maxDepth][depth][boardHash] = value
+        valueTable[boardHash] = {"depth": depth, "value": value}
         return value
 
     elif depth == 0:
         value = color * simpleHeuristicValue(board)
-        valueTable[maxDepth][depth][boardHash] = value
+        valueTable[boardHash] = {"depth": depth, "value": value}
         return value
 
     value = -np.inf
@@ -298,7 +307,7 @@ def negamax(board, depth=0, maxDepth=0, color=1):
         value = max(value, -negamax(board, depth - 1, maxDepth=maxDepth, color=-color))
         board.pop()
 
-    valueTable[maxDepth][depth][boardHash] = value
+    valueTable[boardHash] = {"depth": depth, "value": value}
     return value
 
 
