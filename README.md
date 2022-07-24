@@ -40,10 +40,11 @@ optional:
 
 - [x] User input via clicking
 - [x] Info in the webpage
-- [ ] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
 - [x] NegaMax
+- [ ] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
 - [ ] Iterative deepening
 - [ ] Aspiration Window
+- [ ] Negascout (Principal variation search)
 - [x] ~~Pypy~~ (Pypy 3.7 seems 1% to 10% slower than Python 3.8)
 - [x] Piece value heuristic
 - [x] MiniMax

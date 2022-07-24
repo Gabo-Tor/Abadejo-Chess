@@ -8,8 +8,8 @@ from flask.wrappers import Response
 import logging
 
 # board =  chess.Board("r1b1k1nr/ppp2ppp/1bn1pq2/3p4/3P4/P3BN1P/1PP1PPPR/RNQ1KB2 b Qkq - 4 7")
-# board =  chess.Board("5rk1/Ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R w Kq - 0 1")
-# board =  chess.Board("r1b2rk1/ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R b Kq - 0 1")
+# board = chess.Board("5rk1/Ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R w Kq - 0 1")
+# board = chess.Board("r1b2rk1/ppppqp1p/6p1/4n3/4Q3/2P5/PP2NPPP/3RKB1R b Kq - 0 1")
 useNeuralValuator = False
 board = chess.Board()
 moveList = []
