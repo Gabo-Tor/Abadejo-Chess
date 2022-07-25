@@ -23,17 +23,17 @@
 }
 
 .white-1e1d7 {
-  background-color: #f0f0f0;
+  background-color: #e6e6e6;
   color: #b58863;
 }
 
 .black-3c85d {
-  background-color: #8b9bad;
+  background-color: #91a7b8;
   color: #f0d9b5;
 }
 
 .highlight1-32417, .highlight2-9c5d2 {
-  box-shadow: inset 0 0 3px 3px yellow;
+  box-shadow: inset 0 0 3px 3px rgb(239, 104, 20);
 }
 
 .notation-322f9 {

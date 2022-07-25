@@ -4,6 +4,9 @@ import numpy as np
 from chess.polyglot import zobrist_hash
 from neural_valuator import NeuralValuator
 
+valueTable = (
+    dict()
+)  # INFO if too much memory is used this can be done inside count material, but not resettng every time migth be good
 
 materialValues = {
     chess.PAWN: 100,
@@ -131,8 +134,8 @@ def heuristicValue(board):
             WMvalue = len(list(board.pseudo_legal_moves))
             board.turn = chess.BLACK
         movilityValue = WMvalue - BMvalue
-        # print(f"Material Val: {materialValue} Movility Val: {max(Wvalue, Bvalue) * movilityValue /20000}")
-        return materialValue + max(Wvalue, Bvalue) * movilityValue / 20000
+        # print(f"Material Val: {materialValue} Movility Val: {max(Wvalue, Bvalue) * movilityValue}")
+        return materialValue + ((max(Wvalue, Bvalue) - 200) * movilityValue) / 20000
 
 
 def simpleHeuristicValue(board):
@@ -153,23 +156,26 @@ def makeMove(board):
     global valueTable
     global posEvaluated
     global hashedPos
-    maxDepth = 5
+    maxDepth = 9
+    maxTime = 5  # seconds
     sTime = time.perf_counter()
     posEvaluated, hashedPos = 0, 0
     moveValues = []
-    valueTable = dict()
 
     for depth in range(maxDepth):
-        print(f"\n\u001b[36m-Evaluating at depth: {depth}\u001b[0m ", end="")
-        moveValues = list(
-            moveValue(board, move, depth=depth, maxDepth=depth)
-            for move in board.legal_moves
-        )
+        print(f"\n\u001b[36m-Evaluating at depth: {depth}\u001b[0m ")
+
+        moveValues = []
+
+        for i, move in enumerate(board.legal_moves):
+            print("-" * i, "\033[F", sep="")
+            moveValues.append(moveValue(board, move, depth=depth))
+
         print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
         print(f"Evaluated {len(valueTable)} pos | Hashed {hashedPos} pos")
-        print(f"    ↖ Percentage: {100*hashedPos/len(valueTable):.2f}% ↗")
+        print(f"    ↖ Percentage: {100*hashedPos/(len(valueTable)):.2f}% ↗")
 
-        if (time.perf_counter() - sTime) > 60:
+        if (time.perf_counter() - sTime) > maxTime:
             break
 
     if board.turn == chess.WHITE:
@@ -178,31 +184,42 @@ def makeMove(board):
         idxMove = np.argmin(moveValues)
     nextMove = list(board.legal_moves)[idxMove]
 
+    print("\nMove: Value")
     for val, move in zip(moveValues, board.legal_moves):
-        print(move, ":", f"{val / 100:.2f}")
+        print(f"{move}:{val:+6.2f}")
 
-    return nextMove, moveValues[idxMove] / 100
+    return nextMove, moveValues[idxMove]
 
 
-def moveValue(board, move, depth=0, maxDepth=0):
+def moveValue(board, move, depth=0):
     # gives the value for a move in the given board using some evaluation
 
     board.push(move)
-    value = negamaxAB(board, depth=depth, maxDepth=maxDepth)
+    value = negamaxAB(board, depth=depth)
     board.pop()
 
     return value
 
 
-def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
-    # TODO esto está mal implementado rehacer
+def negamaxAB(board, depth=0, alpha=-np.inf, beta=np.inf, color=1):
     boardHash = zobrist_hash(board)
     global hashedPos
 
-    if boardHash in valueTable:
+    alphaOrig = alpha
+
+    if boardHash in valueTable:  # Sepuede poner las dos cosas en la misma linea?
         if valueTable[boardHash]["depth"] >= depth:
             hashedPos += 1
-            return valueTable[boardHash]["value"]
+
+            if valueTable[boardHash]["flag"] == 0:  # 0: EXACT
+                return valueTable[boardHash]["value"]
+            elif valueTable[boardHash]["flag"] == -1:  # -1: LOWERBOUND
+                alpha = max(alpha, valueTable[boardHash]["value"])
+            elif valueTable[boardHash]["flag"] == 1:  # 1: UPPERBOUND
+                beta = min(beta, valueTable[boardHash]["value"])
+
+            if alpha >= beta:
+                return valueTable[boardHash]["value"]
 
     if (
         board.is_stalemate()
@@ -210,24 +227,25 @@ def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
         or board.is_fifty_moves()
     ):
         value = 0
-        valueTable[boardHash] = {"depth": depth, "value": value}
+        valueTable[boardHash] = {"depth": depth, "value": value, "flag": 0}
         return value
 
     elif depth == 0:
-        value = color * simpleHeuristicValue(board)
-        valueTable[boardHash] = {"depth": depth, "value": value}
+        value = color * heuristicValue(board)
+        valueTable[boardHash] = {"depth": depth, "value": value, "flag": 0}
         return value
 
     value = -np.inf
 
-    for move in board.legal_moves:
+    for (
+        move
+    ) in board.legal_moves:  # TODO order moves using heuristic or iterative deepening
         board.push(move)
         value = max(
             value,
             -negamaxAB(
                 board,
                 depth - 1,
-                maxDepth=maxDepth,
                 alpha=-beta,
                 beta=-alpha,
                 color=-color,
@@ -240,8 +258,22 @@ def negamaxAB(board, depth=0, maxDepth=0, alpha=-np.inf, beta=np.inf, color=1):
         if alpha >= beta:
             break
 
-    valueTable[boardHash] = {"depth": alpha, "value": value}
-    return alpha
+    if value <= alphaOrig:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": 1,
+        }  # 1: UPPERBOUND
+    elif value >= beta:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": -1,
+        }  # -1: LOWERBOUND
+    else:
+        valueTable[boardHash] = {"depth": alpha, "value": value, "flag": 0}  # 0: EXACT
+
+    return value
 
 
 def negamaxHash(board, depth=0, maxDepth=0, color=1):
