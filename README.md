@@ -41,7 +41,7 @@ optional:
 - [x] User input via clicking
 - [x] Info in the webpage
 - [x] NegaMax
-- [ ] [NegaMax + Zobrist Hash](https://en.wikipedia.org/wiki/Negamax)
+- [x] [NegaMax + Zobrist Hash with alpha beta pruning](https://en.wikipedia.org/wiki/Negamax)
 - [ ] Iterative deepening
 - [ ] Aspiration Window
 - [ ] Negascout (Principal variation search)
@@ -53,7 +53,7 @@ optional:
 - [x] MiniMax + Alpha Beta pruning
 - [x] Piece square tables
 - [x] Move ordering (moves that capture pieces may be examined before moves that do not, and moves that have scored highly in earlier passes through the game-tree analysis may be evaluated before others)
-- [x] Quiescence search
+- [ ] Quiescence search
 - [x] User input via submit field
 - [x] Automatic enemy move
 - [x] Zobrist Hashing

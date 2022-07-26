@@ -1,5 +1,6 @@
 import chess
 import time
+from tqdm import tqdm
 import numpy as np
 from chess.polyglot import zobrist_hash
 from neural_valuator import NeuralValuator
@@ -163,17 +164,18 @@ def makeMove(board):
     moveValues = []
 
     for depth in range(maxDepth):
-        print(f"\n\u001b[36m-Evaluating at depth: {depth}\u001b[0m ")
+        print(f"\u001b[36m-Evaluating at depth: {depth}\u001b[0m ")
 
         moveValues = []
 
-        for i, move in enumerate(board.legal_moves):
-            print("-" * i, "\033[F", sep="")
+        for i, move in enumerate(
+            tqdm(board.legal_moves, total=len(list(board.legal_moves)))
+        ):
             moveValues.append(moveValue(board, move, depth=depth))
 
-        print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
         print(f"Evaluated {len(valueTable)} pos | Hashed {hashedPos} pos")
         print(f"    ↖ Percentage: {100*hashedPos/(len(valueTable)):.2f}% ↗")
+        print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
 
         if (time.perf_counter() - sTime) > maxTime:
             break
@@ -195,8 +197,99 @@ def moveValue(board, move, depth=0):
     # gives the value for a move in the given board using some evaluation
 
     board.push(move)
-    value = negamaxAB(board, depth=depth)
+    value = negamaxABdeep(board, depth=depth)
     board.pop()
+
+    return value
+
+
+def negamaxABdeep(board, depth=0, alpha=-np.inf, beta=np.inf, color=1, boardHash=None):
+    # Negamax with alpha beta pruning, memoization and iterative deepening
+    # TODO: this is slooow now is hashingdict working correctly?
+    if not boardHash:
+        boardHash = zobrist_hash(board)
+    global hashedPos
+
+    alphaOrig = alpha
+
+    if boardHash in valueTable:  # Sepuede poner las dos cosas en la misma linea?
+        if valueTable[boardHash]["depth"] >= depth:
+            hashedPos += 1
+
+            if valueTable[boardHash]["flag"] == 0:  # 0: EXACT
+                return valueTable[boardHash]["value"]
+            elif valueTable[boardHash]["flag"] == -1:  # -1: LOWERBOUND
+                alpha = max(alpha, valueTable[boardHash]["value"])
+            elif valueTable[boardHash]["flag"] == 1:  # 1: UPPERBOUND
+                beta = min(beta, valueTable[boardHash]["value"])
+
+            if alpha >= beta:
+                return valueTable[boardHash]["value"]
+
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_fifty_moves()
+    ):
+        value = 0
+        valueTable[boardHash] = {"depth": depth, "value": value, "flag": 0}
+        return value
+
+    elif depth == 0:
+        value = color * heuristicValue(board)
+        valueTable[boardHash] = {"depth": depth, "value": value, "flag": 0}
+        return value
+
+    value = -np.inf
+
+    orderedMoves = {}
+    hashDict = {}
+    for move in board.legal_moves:  # order moves
+        board.push(move)
+        moveHash = zobrist_hash(board)
+        if moveHash in valueTable:
+            orderedMoves[move] = valueTable[moveHash]["value"]
+
+        else:
+            orderedMoves[move] = 9999  # todo this migth not be a good default value
+        hashDict[move] = moveHash
+        board.pop()
+
+    for move in sorted(orderedMoves, key=orderedMoves.get):
+        # for move in orderedMove1s:
+        board.push(move)
+        value = max(
+            value,
+            -negamaxABdeep(
+                board,
+                depth - 1,
+                alpha=-beta,
+                beta=-alpha,
+                color=-color,
+                boardHash=hashDict[move],
+            ),
+        )
+        board.pop()
+
+        alpha = max(alpha, value)
+
+        if alpha >= beta:
+            break
+
+    if value <= alphaOrig:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": 1,
+        }  # 1: UPPERBOUND
+    elif value >= beta:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": -1,
+        }  # -1: LOWERBOUND
+    else:
+        valueTable[boardHash] = {"depth": alpha, "value": value, "flag": 0}  # 0: EXACT
 
     return value
 
