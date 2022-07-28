@@ -4,31 +4,33 @@ A Neural Chess AI in Python
 
 ## ♙ Description
 
-This aims to be a simple and inefficient chess engine programed in Python for learning about AI, PyTorch and dataset generation
+This aims to be a simple and efficient chess engine programed in Python for learning about AI, PyTorch and dataset generation.
 
 ![GUI](./GUI.png)
 
 ## ♙ Use
 
-Run app.py with Python3, it works using flask on localhost, go to <http://127.0.0.1:5000/> for the move interface
+Run app.py with Python3. It works using Flask on localhost, go to <http://127.0.0.1:5000/>.
+*For the move interface*
+- Drag the piece to the desired square. Illegal moves are rejected.
+- Promoting to queen is automatic, followed automatically by an enemy computer move.
+*Human move*
+- Makes the SAN notated move, followed automatically by an enemy computer move
+*Computer move*
+- Makes a move using the engine for the side currently playing.
 
-- Simply drag the piece to the desired square, ilegal moves are rejected, promoting to queen is automatic, followed autmatically by an enemy computer move
-  or:
-- Human move: Makes the SAN notated move followed autmatically by an enemy computer move
-- Computer move: Makes a move using the engine for the side currently playing
+## ♙ Dependencies
 
-## ♙ Dependancies
+**Python 3**, of course.
 
-**Python 3** of course
-
-- [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldnt have started the projet w/o this
+- [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldn't have started the projet without this
 - [numpy](https://pypi.org/project/numpy/): Efficient data structures
 - [flask](https://pypi.org/project/Flask/): Interface
   
 optional:
 
 - [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pip, the conda version is too old)
-- cProfile and snakeviz: for profiling to optimaze a little more
+- cProfile and snakeviz: for profiling to optimize a little more
 
 ## ♙ Objetives
 
