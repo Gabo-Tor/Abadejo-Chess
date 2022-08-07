@@ -17,18 +17,18 @@ Run app.py with Python3, it works using flask on localhost, go to <http://127.0.
 - Human move: Makes the SAN notated move followed autmatically by an enemy computer move
 - Computer move: Makes a move using the engine for the side currently playing
 
-## ♙ Dependancies
+## ♙ Dependencies
 
 **Python 3** of course
 
-- [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldnt have started the projet w/o this
+- [chess](https://pypi.org/project/python-chess/): A lifesaver, probably wouldn't have started the projet w/o this
 - [numpy](https://pypi.org/project/numpy/): Efficient data structures
 - [flask](https://pypi.org/project/Flask/): Interface
   
 optional:
 
 - [PyTorch](https://pypi.org/project/torch/): Neural evaluation (use pip, the conda version is too old)
-- cProfile and snakeviz: for profiling to optimaze a little more
+- cProfile and snakeviz: for profiling to optimize a little more
 
 ## ♙ Objetives
 

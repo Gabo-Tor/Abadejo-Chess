@@ -174,7 +174,8 @@ def makeMove(board):
             moveValues.append(moveValue(board, move, depth=depth))
 
         print(f"Evaluated {len(valueTable)} pos | Hashed {hashedPos} pos")
-        print(f"    ↖ Percentage: {100*hashedPos/(len(valueTable)):.2f}% ↗")
+        if depth > 0:
+            print(f"    ↖ Percentage: {100*hashedPos/(len(valueTable)):.2f}% ↗")
         print(f"Time spent: {time.perf_counter()-sTime:.2f}s")
 
         if (time.perf_counter() - sTime) > maxTime:
@@ -197,8 +198,154 @@ def moveValue(board, move, depth=0):
     # gives the value for a move in the given board using some evaluation
 
     board.push(move)
-    value = negamaxABdeep(board, depth=depth)
+    value = PVSdeep(board, depth=depth)
     board.pop()
+
+    return value
+
+
+def quiesce(board, alpha=-np.inf, beta=np.inf, color=1):
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_fifty_moves()
+    ):
+        return 0
+
+    standPat = color * heuristicValue(board)
+
+    if standPat >= beta:
+        return beta
+
+    if alpha < standPat:
+        alpha = standPat
+
+    for (
+        move
+    ) in board.legal_moves:  # TODO order moves using heuristic or iterative deepening
+        if board.is_capture(move):
+
+            board.push(move)
+            value = -quiesce(board, alpha=-beta, beta=-alpha, color=-color)
+            board.pop()
+
+            if value >= beta:
+                return beta
+            if value > alpha:
+                alpha = value
+
+    return alpha
+
+
+def PVSdeep(board, depth=0, alpha=-np.inf, beta=np.inf, color=1, boardHash=None):
+    # Negamax with alpha beta pruning, memoization and iterative deepening
+    if not boardHash:
+        boardHash = zobrist_hash(board)
+    global hashedPos
+
+    alphaOrig = alpha
+
+    if boardHash in valueTable:  # Sepuede poner las dos cosas en la misma linea?
+        if valueTable[boardHash]["depth"] >= depth:
+            hashedPos += 1
+
+            if valueTable[boardHash]["flag"] == 0:  # 0: EXACT
+                return valueTable[boardHash]["value"]
+            elif valueTable[boardHash]["flag"] == -1:  # -1: LOWERBOUND
+                alpha = max(alpha, valueTable[boardHash]["value"])
+            elif valueTable[boardHash]["flag"] == 1:  # 1: UPPERBOUND
+                beta = min(beta, valueTable[boardHash]["value"])
+
+            if alpha >= beta:
+                return valueTable[boardHash]["value"]
+
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_fifty_moves()
+    ):
+        value = 0
+        valueTable[boardHash] = {"depth": depth, "value": value, "flag": 0}
+        return value
+
+    elif depth == 0:
+        value = -quiesce(board, alpha=-beta, beta=-alpha, color=-color)
+        return value
+
+    value = -np.inf
+
+    orderedMoves = {}
+    hashDict = {}
+    for move in board.legal_moves:  # order moves
+        board.push(move)
+        moveHash = zobrist_hash(board)
+        if moveHash in valueTable:
+            orderedMoves[move] = valueTable[moveHash]["value"]
+
+        else:
+            orderedMoves[move] = 9999  # todo this migth not be a good default value
+            # TODO should thos be multiplied by *color??
+        hashDict[move] = moveHash
+        board.pop()
+
+    firstNode = True
+    for move in sorted(orderedMoves, key=orderedMoves.get):
+
+        if firstNode:
+            board.push(move)
+            value = -PVSdeep(
+                board,
+                depth - 1,
+                alpha=-beta,
+                beta=-alpha,
+                color=-color,
+                boardHash=hashDict[move],
+            )
+            board.pop()
+            firstNode = False
+
+        else:
+            board.push(move)
+            value = -PVSdeep(
+                board,
+                depth - 1,
+                alpha=-alpha - 1,
+                beta=-alpha,
+                color=-color,
+                boardHash=hashDict[move],
+            )
+            board.pop()
+
+            if alpha < value < beta:
+                board.push(move)
+                value = -PVSdeep(
+                    board,
+                    depth - 1,
+                    alpha=-beta,
+                    beta=-alpha,
+                    color=-color,
+                    boardHash=hashDict[move],
+                )
+                board.pop()
+
+        alpha = max(alpha, value)
+        if alpha >= beta:
+            break
+
+    if value <= alphaOrig:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": 1,
+        }  # 1: UPPERBOUND
+    elif value >= beta:
+        valueTable[boardHash] = {
+            "depth": alpha,
+            "value": value,
+            "flag": -1,
+        }  # -1: LOWERBOUND
+    else:
+        valueTable[boardHash] = {"depth": alpha, "value": value, "flag": 0}  # 0: EXACT
 
     return value
 
@@ -251,8 +398,9 @@ def negamaxABdeep(board, depth=0, alpha=-np.inf, beta=np.inf, color=1, boardHash
             orderedMoves[move] = valueTable[moveHash]["value"]
 
         else:
-            orderedMoves[move] = 9999  # todo this migth not be a good default value
-        hashDict[move] = moveHash
+            orderedMoves[move] = -9999  # todo this migth not be a good default value
+            # TODO should thos be multiplied by *color??
+        hashDict[move] = moveHash * color
         board.pop()
 
     for move in sorted(orderedMoves, key=orderedMoves.get):
