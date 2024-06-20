@@ -8,7 +8,7 @@ This aims to be a simple and inefficient chess engine programed in Python for le
 
 ![GUI](./GUI.png)
 
-## ♙ Use
+## ♙ Usage
 
 Run app.py with Python3, it works using flask on localhost, go to <http://127.0.0.1:5000/> for the move interface
 
